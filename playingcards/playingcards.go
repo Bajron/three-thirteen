@@ -12,6 +12,20 @@ import (
 	"unicode/utf8"
 )
 
+var SUITS []Suit = nil
+var RANKS []Rank = nil
+
+func init() {
+	SUITS = make([]Suit, SUIT_COUNT)
+	for i:=0; i<int(SUIT_COUNT); i++ {
+		SUITS[i] = Suit(i)
+	}
+	RANKS = make([]Rank, RANK_COUNT)
+	for i:=0; i<int(RANK_COUNT); i++ {
+		RANKS[i] = Rank(i)
+	}
+}
+
 type Card struct {
 	Rank Rank
 	Suit Suit
@@ -24,16 +38,18 @@ const (
 	DIAMONDS
 	SPADES
 	HEARTS
+	SUIT_COUNT
 )
 
 type Rank int8 
 
 const (
-	JOCKER = 0
-	ACE = 1 
 	JACK = 11 + iota
 	QUEEN
 	KING
+	RANK_COUNT
+	JOCKER = 0
+	ACE = 1 
 )
 
 func (c Card) String() string {
