@@ -1,3 +1,7 @@
+// Copyright 2015 Blazej Kramarski. All rights reserved.
+
+// Package playingcards provides types and functions for card games.
+
 package playingcards 
 
 import (
@@ -22,11 +26,11 @@ const (
 type Rank int8 
 
 const (
+	JOCKER = 0
 	ACE = 1 
-	JACK = 11
+	JACK = 11 + iota
 	QUEEN
 	KING
-	JOCKER
 )
 
 func (r Rank) String() string {
@@ -38,10 +42,11 @@ func (r Rank) String() string {
 		case r == QUEEN: return "Q"
 		case r == KING: return "K"
 		case r == JOCKER: return "I"
-		default: return fmt.Sprint("?%d?", r)
+		default: return fmt.Sprintf("?%d?", int8(r))
 	}
 }
 
 func (c Card) String() string {
 	return fmt.Sprintf("%s %d", c.Rank, c.Suit)
 }
+
