@@ -9,5 +9,7 @@ func main() {
 	tmp := playingcards.Card{2, 1} 
 	fmt.Printf("Hello, world.\n")
 	fmt.Printf("Test card: %s.\n", tmp)
+	fmt.Printf("Test card: %s.\n", tmp.UString())
+	fmt.Printf("Test card: %s.\n", tmp.StringWithUnicode())
 }
 
