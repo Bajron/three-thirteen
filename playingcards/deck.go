@@ -23,3 +23,12 @@ func (deck *Deck) Find(c Card) (int) {
 	return -1
 }
 
+func (deck *Deck) Draw() (c Card) {
+	if len(*deck) <= 0 {
+		return NIL_CARD
+	}
+	c = (*deck)[0]
+	*deck = (*deck)[1:]
+	return
+}
+

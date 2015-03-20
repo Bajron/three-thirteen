@@ -14,6 +14,7 @@ import (
 
 var SUITS []Suit = nil
 var RANKS []Rank = nil
+var NIL_CARD = Card{-1, -1}
 
 func init() {
 	SUITS = make([]Suit, SUIT_COUNT)

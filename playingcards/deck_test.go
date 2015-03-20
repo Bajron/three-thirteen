@@ -26,3 +26,21 @@ func TestFind(t *testing.T) {
 		t.Error("not found inserted card")
 	}
 }
+
+func TestDraw(t *testing.T) {
+	deck := Create52Deck()
+	_ = deck.Draw()
+	if 51 != len(deck) {
+		t.Error("draw did not reduce length")
+	}
+	
+	deck = Deck(make([]Card, 0))
+	card := deck.Draw()
+	if 0 != len(deck) {
+		t.Error("draw from empty changed length")
+	}
+	if card != NIL_CARD {
+		t.Error("got a card from empty deck")
+	}
+}
+
