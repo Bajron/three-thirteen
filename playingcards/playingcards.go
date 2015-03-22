@@ -1,9 +1,6 @@
 // Copyright 2015 Blazej Kramarski. All rights reserved.
 
 // Package playingcards provides types and functions for card games.
-
-// http://en.wikipedia.org/wiki/Playing_cards_in_Unicode
-
 package playingcards 
 
 import (
@@ -37,6 +34,8 @@ func (c Card) String() string {
 	return fmt.Sprintf("%s%s", c.Rank, c.Suit)
 }
 
+// UString returns unicode rune for a card
+// http://en.wikipedia.org/wiki/Playing_cards_in_Unicode
 func (c Card) UString() string {
 	base := getBaseUnicodeCard(c.Suit)
 	if base == utf8.RuneError {
