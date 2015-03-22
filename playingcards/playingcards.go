@@ -27,31 +27,11 @@ func init() {
 	}
 }
 
+
 type Card struct {
 	Rank Rank
 	Suit Suit
 }
-
-type Suit int8 
-
-const (
-	CLUBS = iota
-	DIAMONDS
-	SPADES
-	HEARTS
-	SUIT_COUNT
-)
-
-type Rank int8 
-
-const (
-	JACK = 11 + iota
-	QUEEN
-	KING
-	RANK_COUNT
-	JOCKER = 0
-	ACE = 1 
-)
 
 func (c Card) String() string {
 	return fmt.Sprintf("%s%s", c.Rank, c.Suit)
@@ -71,6 +51,54 @@ func (c Card) UString() string {
 func (c Card) StringWithUnicode() string {
 	return fmt.Sprintf("%s%s", c.Rank, c.Suit.UString())
 }
+
+func Compare(lhs Card, rhs Card) int {
+	if lhs.Rank < rhs.Rank ||
+		lhs.Rank == rhs.Rank && lhs.Suit < rhs.Suit {
+		return -1
+	}
+	if lhs.Rank > rhs.Rank ||
+		lhs.Rank == rhs.Rank && lhs.Suit > rhs.Suit {
+		return 1
+	}
+	return 0
+}
+
+type Rank int8
+
+const (
+	JACK = 11 + iota
+	QUEEN
+	KING
+	RANK_COUNT
+	JOCKER = 0
+	ACE = 1
+)
+
+
+func (r Rank) String() string {
+	switch {
+		case 2 <= r && r <= 10 :
+			return strconv.Itoa(int(r))
+		case r == ACE: return "A"
+		case r == JACK: return "J"
+		case r == QUEEN: return "Q"
+		case r == KING: return "K"
+		case r == JOCKER: return "*"
+		default: return fmt.Sprintf("?%d?", int8(r))
+	}
+}
+
+
+type Suit int8
+
+const (
+	CLUBS = iota
+	DIAMONDS
+	SPADES
+	HEARTS
+	SUIT_COUNT
+)
 
 func getBaseUnicodeCard(s Suit) rune {
 	switch s {
@@ -99,19 +127,6 @@ func (s Suit) UString() string {
 		case SPADES: return "\u2660";
 		case HEARTS: return "\u2665";
 		default: return "?";
-	}
-}
-
-func (r Rank) String() string {
-	switch {
-		case 2 <= r && r <= 10 :
-			return strconv.Itoa(int(r))
-		case r == ACE: return "A"
-		case r == JACK: return "J"
-		case r == QUEEN: return "Q"
-		case r == KING: return "K"
-		case r == JOCKER: return "*"
-		default: return fmt.Sprintf("?%d?", int8(r))
 	}
 }
 

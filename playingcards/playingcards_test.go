@@ -34,3 +34,17 @@ func TestSuitString(t *testing.T) {
 	verifySuitString(t, "?", Suit(-1));
 }
 
+func verifyCompare(t *testing.T, lhs Card, rhs Card, expected int) {
+	r := Compare(lhs, rhs)
+	if r != expected {
+		t.Error("invalid result %d (!= %d) for %s and %s",
+			r, expected, lhs, rhs)
+	}
+}
+
+func TestCompare(t *testing.T) {
+	verifyCompare(t, Card{2,HEARTS}, Card{2, HEARTS}, 0)
+	verifyCompare(t, Card{3,HEARTS}, Card{4, HEARTS}, -1)
+	verifyCompare(t, Card{3,HEARTS}, Card{2, HEARTS}, 1)
+}
+
