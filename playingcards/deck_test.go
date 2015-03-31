@@ -13,6 +13,23 @@ func TestCreate52Deck(t *testing.T) {
 	}
 }
 
+func TestCreate104Deck(t *testing.T) {
+	deck := Create104Deck()
+	if len(deck) != 104 {
+		t.Errorf("deck has %d cards instead of 104", len(deck));
+	}
+
+	var idx int
+	if idx = deck.Find(Card{ACE, SPADES}); -1 == idx {
+		t.Error("Ace of spades not found")
+	}
+
+	cutOnAce := deck[idx+1:]
+	if idx = cutOnAce.Find(Card{ACE, SPADES}); -1 == idx {
+		t.Error("second Ace of spades not found")
+	}
+}
+
 func TestFind(t *testing.T) {
 	deck := Deck(make([]Card, 0))
 	if -1 != deck.Find(Card{ACE, SPADES}) {

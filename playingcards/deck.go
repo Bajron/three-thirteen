@@ -14,6 +14,14 @@ func Create52Deck() (Deck) {
 	return ret
 }
 
+func Create104Deck() (Deck) {
+	ret := make([]Card, 104);
+	d52 := Create52Deck()
+	copy(ret, d52)
+	copy(ret[52:], d52)
+	return ret
+}
+
 func (deck *Deck) Find(c Card) (int) {
 	for i, v := range *deck {
 		if v == c {
