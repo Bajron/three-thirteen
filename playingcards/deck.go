@@ -40,3 +40,5 @@ func (deck *Deck) Draw() (c Card) {
 	return
 }
 
+// TODO: create a Pile == Deck with method Pop()
+
