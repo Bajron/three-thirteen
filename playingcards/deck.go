@@ -1,6 +1,7 @@
 package playingcards
 
 type Deck []Card
+type Pile []Card
 
 func Create52Deck() (Deck) {
 	ret := make([]Card, 52)
@@ -40,5 +41,25 @@ func (deck *Deck) Draw() (c Card) {
 	return
 }
 
-// TODO: create a Pile == Deck with method Pop()
+func (pile *Pile) Pop() (Card) {
+	c, idx := pile.getLast()
+	if idx > 0 {
+		*pile = (*pile)[:idx]
+	}
+	return c
+}
+
+func (pile *Pile) Top() (Card) {
+	c,_ := pile.getLast()
+	return c
+}
+
+func (pile *Pile) getLast() (c Card, i int) {
+	if len(*pile) <= 0 {
+		return NIL_CARD, -1
+	}
+	idx := len(*pile) - 1;
+	c = (*pile)[idx]
+	return c, idx
+}
 

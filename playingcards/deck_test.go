@@ -61,3 +61,23 @@ func TestDraw(t *testing.T) {
 	}
 }
 
+func TestPop(t *testing.T) {
+	pile := Pile(make([]Card, 0))
+	if NIL_CARD != pile.Pop() {
+		t.Error("you should get NIL_CARD from empty pile")
+	}
+
+	kh := Card{KING, HEARTS}
+	as := Card{ACE, SPADES}
+	pile = append(pile, as, kh)
+	if kh != pile.Pop() {
+		t.Error("you should get last appended with Pop")
+	}
+	if len(pile) != 1 {
+		t.Error("Pop should remove element from the pile")
+	}
+	if as != pile.Top() {
+		t.Error("you should see top element from a pile")
+	}
+}
+
