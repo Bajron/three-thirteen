@@ -17,6 +17,14 @@ type Player struct {
 	Points int
 }
 
+type Move int
+
+const (
+	TAKE_FROM_PILE = iota
+	TAKE_FROM_DECK
+)
+
+// TODO make things private?
 func New(playersNo int) (*State) {
 	return &State{
 		make([]Player, playersNo),
@@ -37,3 +45,24 @@ func (s *State) Deal() {
 	s.Pile = append(s.Pile, s.Deck.Draw())
 }
 
+type moveError struct {
+	msg string
+}
+
+func (e *moveError) Error() string {
+	return e.msg
+}
+
+func (s *State) TakeMove(player int, move Move) (playingcards.Card, error) {
+	if s.CurrentPlayer != player {
+		return playingcards.NIL_CARD, &moveError{"invalid move"}
+	}
+	switch move {
+		case TAKE_FROM_PILE:
+			return s.Pile.Pop(), nil
+		case TAKE_FROM_DECK:
+			return s.Deck.Draw(), nil
+		default:
+			return playingcards.NIL_CARD, &moveError{"invalid move"}
+	}
+}

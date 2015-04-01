@@ -1,6 +1,9 @@
 package game313
 
-import "testing"
+import (
+	"testing"
+	"github.com/Bajron/three-thirteen/playingcards"
+)
 
 func TestNew(t *testing.T) {
 	var value interface{}
@@ -50,5 +53,36 @@ func TestDeal(t *testing.T) {
 	if len(state.Deck) != (104 - 3*3 - 1) {
 		t.Error("deck should not have already dealed cards")
 	}
+}
+
+func TestMove(t *testing.T) {
+	state := New(3)
+	state.Deal()
+
+	card, err := state.TakeMove(2, TAKE_FROM_PILE)
+	if card != playingcards.NIL_CARD || err == nil {
+		t.Error("move should fail if not current player")
+	}
+	card, err = state.TakeMove(0, -1)
+	if card != playingcards.NIL_CARD || err == nil {
+		t.Error("move should fail if invalid move")
+	}
+
+	onPile := state.Pile.Top()
+	card, err = state.TakeMove(0, TAKE_FROM_PILE)
+	if card != onPile || err != nil {
+		t.Error("move should return a card from the pile")
+	}
+
+// TODO second take is error
+
+	deckLen := len(state.Deck)
+	card, err = state.TakeMove(0, TAKE_FROM_DECK)
+	if card == playingcards.NIL_CARD ||
+			err != nil || (deckLen - 1) != len(state.Deck) {
+		t.Error("move should take a card from deck")
+	}
+
+// TODO hand should be updated
 }
 
