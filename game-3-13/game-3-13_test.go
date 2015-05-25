@@ -96,7 +96,7 @@ func TestMove(t *testing.T) {
 		t.Error("move should take a card from deck")
 	}
 
-
-// TODO hand should be updated
+	// TODO: throw move
+	// TODO: done move
 }
 
