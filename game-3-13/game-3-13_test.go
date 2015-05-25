@@ -85,8 +85,12 @@ func TestMove(t *testing.T) {
 		t.Error("second take move should fail")
 	}
 
+	// reinitialized
+	state = New(3)
+	state.Deal()
+
 	deckLen = len(state.Deck)
-	card, err = state.TakeMove(1, TAKE_FROM_DECK)
+	card, err = state.TakeMove(0, TAKE_FROM_DECK)
 	if card == playingcards.NIL_CARD ||
 			err != nil || (deckLen - 1) != len(state.Deck) {
 		t.Error("move should take a card from deck")

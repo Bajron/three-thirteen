@@ -55,18 +55,20 @@ func (e *moveError) Error() string {
 
 func (s *State) TakeMove(player int, move Move) (playingcards.Card, error) {
 	if s.CurrentPlayer != player {
-		return playingcards.NIL_CARD, &moveError{"invalid move"}
+		return playingcards.NIL_CARD, &moveError{"wrong player"}
 	}
+	if int(s.Trumph) < len(s.Players[s.CurrentPlayer].Hand) {
+		return playingcards.NIL_CARD, &moveError{"already took"}
+	}
+
 	switch move {
 		case TAKE_FROM_PILE:
 			card := s.Pile.Pop()
 			s.applyTake(card)
-			s.advancePlayer()
 			return card, nil
 		case TAKE_FROM_DECK:
 			card := s.Deck.Draw()
 			s.applyTake(card)
-			s.advancePlayer()
 			return card, nil
 		default:
 			return playingcards.NIL_CARD, &moveError{"invalid move"}
