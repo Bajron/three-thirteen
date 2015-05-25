@@ -74,14 +74,24 @@ func TestMove(t *testing.T) {
 		t.Error("move should return a card from the pile")
 	}
 
-// TODO second take is error
+	if state.Players[0].Hand[len(state.Players[0].Hand) - 1] != onPile {
+		t.Error("player's hand should be updated")
+	}
 
 	deckLen := len(state.Deck)
 	card, err = state.TakeMove(0, TAKE_FROM_DECK)
+	if card != playingcards.NIL_CARD ||
+			err == nil || deckLen != len(state.Deck) {
+		t.Error("second take move should fail")
+	}
+
+	deckLen = len(state.Deck)
+	card, err = state.TakeMove(1, TAKE_FROM_DECK)
 	if card == playingcards.NIL_CARD ||
 			err != nil || (deckLen - 1) != len(state.Deck) {
 		t.Error("move should take a card from deck")
 	}
+
 
 // TODO hand should be updated
 }

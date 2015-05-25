@@ -59,10 +59,26 @@ func (s *State) TakeMove(player int, move Move) (playingcards.Card, error) {
 	}
 	switch move {
 		case TAKE_FROM_PILE:
-			return s.Pile.Pop(), nil
+			card := s.Pile.Pop()
+			s.applyTake(card)
+			s.advancePlayer()
+			return card, nil
 		case TAKE_FROM_DECK:
-			return s.Deck.Draw(), nil
+			card := s.Deck.Draw()
+			s.applyTake(card)
+			s.advancePlayer()
+			return card, nil
 		default:
 			return playingcards.NIL_CARD, &moveError{"invalid move"}
 	}
 }
+
+func (s *State) advancePlayer() {
+	s.CurrentPlayer = (s.CurrentPlayer + 1) % len(s.Players);
+}
+
+func (s *State) applyTake(card playingcards.Card) {
+	s.Players[s.CurrentPlayer].Hand =
+		append(s.Players[s.CurrentPlayer].Hand, card);
+}
+
