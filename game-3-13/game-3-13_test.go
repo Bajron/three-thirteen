@@ -1,15 +1,15 @@
 package game313
 
 import (
-	"testing"
 	"github.com/Bajron/three-thirteen/playingcards"
+	"testing"
 )
 
 func TestNew(t *testing.T) {
 	var value interface{}
 	value = New(3)
 	state, ok := value.(*State)
-	if ! ok {
+	if !ok {
 		t.Error("returned value is not of type State*")
 	}
 
@@ -74,14 +74,14 @@ func TestMove(t *testing.T) {
 		t.Error("move should return a card from the pile")
 	}
 
-	if state.Players[0].Hand[len(state.Players[0].Hand) - 1] != onPile {
+	if state.Players[0].Hand[len(state.Players[0].Hand)-1] != onPile {
 		t.Error("player's hand should be updated")
 	}
 
 	deckLen := len(state.Deck)
 	card, err = state.TakeMove(0, TAKE_FROM_DECK)
 	if card != playingcards.NIL_CARD ||
-			err == nil || deckLen != len(state.Deck) {
+		err == nil || deckLen != len(state.Deck) {
 		t.Error("second take move should fail")
 	}
 
@@ -92,7 +92,7 @@ func TestMove(t *testing.T) {
 	deckLen = len(state.Deck)
 	card, err = state.TakeMove(0, TAKE_FROM_DECK)
 	if card == playingcards.NIL_CARD ||
-			err != nil || (deckLen - 1) != len(state.Deck) {
+		err != nil || (deckLen-1) != len(state.Deck) {
 		t.Error("move should take a card from deck")
 	}
 
@@ -100,3 +100,46 @@ func TestMove(t *testing.T) {
 	// TODO: done move
 }
 
+func TestThrowMove(t *testing.T) {
+	state := New(3)
+	state.Deal()
+
+	err := state.ThrowMove(0, (*state.currentPlayerHand())[0])
+	if err == nil {
+		t.Error("throw without earlier take is error")
+	}
+
+	err = state.ThrowMove(1, (*state.currentPlayerHand())[0])
+	if err == nil {
+		t.Error("throw of different player is error")
+	}
+
+	// ready to throw after take
+	state.TakeMove(0, TAKE_FROM_DECK)
+
+	err = state.ThrowMove(1, (*state.currentPlayerHand())[0])
+	if err == nil {
+		t.Error("throw of different player is error")
+	}
+
+	err = state.ThrowMove(0, playingcards.NIL_CARD)
+	if err == nil {
+		t.Error("throwing not owned card should fail")
+	}
+
+	card := (*state.currentPlayerHand())[0]
+	err = state.ThrowMove(0, card)
+	if err != nil {
+		t.Error("throw should succeed")
+	}
+	if !state.curPlayerHasValidHand() {
+		t.Error("hand should have correct number of cards")
+	}
+	if state.Pile.Top() != card {
+		t.Error("thrown card should be on top of pile")
+	}
+}
+
+func (s State) curPlayerHasValidHand() bool {
+	return len(*s.currentPlayerHand()) == int(s.Trumph)
+}

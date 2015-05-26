@@ -3,7 +3,7 @@ package playingcards
 type Deck []Card
 type Pile []Card
 
-func Create52Deck() (Deck) {
+func Create52Deck() Deck {
 	ret := make([]Card, 52)
 	i := 0
 	for _, suit := range SUITS {
@@ -15,21 +15,25 @@ func Create52Deck() (Deck) {
 	return ret
 }
 
-func Create104Deck() (Deck) {
-	ret := make([]Card, 104);
+func Create104Deck() Deck {
+	ret := make([]Card, 104)
 	d52 := Create52Deck()
 	copy(ret, d52)
 	copy(ret[52:], d52)
 	return ret
 }
 
-func (deck *Deck) Find(c Card) (int) {
-	for i, v := range *deck {
+func findCard(cards []Card, c Card) int {
+	for i, v := range cards {
 		if v == c {
 			return i
 		}
 	}
 	return -1
+}
+
+func (deck *Deck) Find(c Card) int {
+	return findCard(*deck, c)
 }
 
 func (deck *Deck) Draw() (c Card) {
@@ -41,7 +45,11 @@ func (deck *Deck) Draw() (c Card) {
 	return
 }
 
-func (pile *Pile) Pop() (Card) {
+func (pile *Pile) Push(card Card) {
+	*pile = append(*pile, card)
+}
+
+func (pile *Pile) Pop() Card {
 	c, idx := pile.getLast()
 	if idx > 0 {
 		*pile = (*pile)[:idx]
@@ -49,8 +57,8 @@ func (pile *Pile) Pop() (Card) {
 	return c
 }
 
-func (pile *Pile) Top() (Card) {
-	c,_ := pile.getLast()
+func (pile *Pile) Top() Card {
+	c, _ := pile.getLast()
 	return c
 }
 
@@ -58,8 +66,7 @@ func (pile *Pile) getLast() (c Card, i int) {
 	if len(*pile) <= 0 {
 		return NIL_CARD, -1
 	}
-	idx := len(*pile) - 1;
+	idx := len(*pile) - 1
 	c = (*pile)[idx]
 	return c, idx
 }
-

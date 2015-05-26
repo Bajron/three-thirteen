@@ -6,14 +6,25 @@ import (
 
 type Hand []Card
 type Group []Card
-type rankMatch func (Rank) bool
+type rankMatch func(Rank) bool
+
+func (h Hand) Has(c Card) bool {
+	return findCard(h, c) != -1
+}
+
+func (h *Hand) Extract(c Card) {
+	i := findCard(*h, c)
+	if i != -1 {
+		*h = append((*h)[:i], (*h)[i+1:]...)
+	}
+}
 
 func (g Group) Len() int {
 	return len(g)
 }
 
 func (g Group) Less(i, j int) bool {
-	return Compare(g[i], g[j]) < 0;
+	return Compare(g[i], g[j]) < 0
 }
 
 func (g Group) Swap(i, j int) {
@@ -38,7 +49,8 @@ func IsSet(g Group, isJocker rankMatch) bool {
 func firstNotJockerRank(g Group, isJocker rankMatch) (Rank, int) {
 	var rank Rank
 	i := 0
-	for ; i<len(g) && isJocker(g[i].Rank); i++ {}
+	for ; i < len(g) && isJocker(g[i].Rank); i++ {
+	}
 	if i < len(g) {
 		rank = g[i].Rank
 	}
@@ -70,7 +82,7 @@ func IsSequence(g Group, isJocker rankMatch) bool {
 		if c.Suit != s {
 			return false
 		}
-		for ;jockersToUse > 0 && c.Rank != r ; {
+		for jockersToUse > 0 && c.Rank != r {
 			jockersToUse--
 			r++
 		}
@@ -87,10 +99,11 @@ func sortPutJockersFirst(g Group, isJocker rankMatch) (firstNotJocker int) {
 	sort.Sort(g)
 
 	var i int = 0
-	for ; i<len(g) && isJocker(g[i].Rank); i++ {}
+	for ; i < len(g) && isJocker(g[i].Rank); i++ {
+	}
 
 	firstNotJocker = i
-	for i = firstNotJocker + 1; i<len(g); i++ {
+	for i = firstNotJocker + 1; i < len(g); i++ {
 		if isJocker(g[i].Rank) {
 			g.Swap(firstNotJocker, i)
 			firstNotJocker++
@@ -99,4 +112,3 @@ func sortPutJockersFirst(g Group, isJocker rankMatch) (firstNotJocker int) {
 
 	return firstNotJocker
 }
-
