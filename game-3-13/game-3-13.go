@@ -18,12 +18,18 @@ type State struct {
 	CurrentState   int
 	Deck           playingcards.Deck
 	Pile           playingcards.Pile
+	FinalGroups    []FinalGroups
 	Trumph         playingcards.Rank
 }
 
 type Player struct {
 	Hand   playingcards.Hand
 	Points int
+}
+
+type FinalGroups struct {
+	Set        []playingcards.Group
+	Unassigned playingcards.Group
 }
 
 type Move int
@@ -46,6 +52,7 @@ func newWithStaringPlayer(playersNo int, startingPlayer int) *State {
 		STARTING,
 		playingcards.Create104Deck(),
 		make([]playingcards.Card, 0, 104),
+		make([]FinalGroups, playersNo),
 		playingcards.Rank(3)}
 }
 
@@ -108,9 +115,12 @@ func (s *State) ThrowMove(player int, card playingcards.Card) error {
 	return nil
 }
 
-func (s *State) DoneMove(player int, groups []playingcards.Group) error {
+func (s *State) DoneMove(player int, groups FinalGroups) error {
 	if s.CurrentState == STARTING {
 		return &moveError{"you cannot finish in first round"}
+	}
+	if s.CurrentPlayer != player {
+		return &moveError{"it is not your turn"}
 	}
 	return nil
 }

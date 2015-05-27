@@ -178,13 +178,25 @@ func TestDoneMove(t *testing.T) {
 	if err == nil {
 		t.Error("you cannot finish in first round")
 	}
+
+	state.CurrentState = PLAYING
+
+	err = state.DoneMove(1, makeSingleGroupSetFromHand(validDoneHand))
+	if err == nil {
+		t.Error("you cannot finish not on your turn")
+	}
+
+	// TODO first done must have not unassigned cards
+	// TODO completion round
+	// TODO points
+	// TODO advance to the next trumph game
 }
 
-func makeSingleGroupSetFromHand(h playingcards.Hand) []playingcards.Group {
+func makeSingleGroupSetFromHand(h playingcards.Hand) FinalGroups {
 	cards := []playingcards.Card(h)
-	ret := make([]playingcards.Group, 1)
-	ret[0] = cards
-	return ret
+	groups := make([]playingcards.Group, 1)
+	groups[0] = cards
+	return FinalGroups{groups, playingcards.Group{}}
 }
 
 func (s State) curPlayerHasValidHand() bool {
