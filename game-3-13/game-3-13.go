@@ -2,14 +2,23 @@ package game313
 
 import (
 	"github.com/Bajron/three-thirteen/playingcards"
+	"math/rand"
+)
+
+const (
+	STARTING = iota
+	PLAYING
+	FINISHING
 )
 
 type State struct {
-	Players       []Player
-	CurrentPlayer int
-	Deck          playingcards.Deck
-	Pile          playingcards.Pile
-	Trumph        playingcards.Rank
+	Players        []Player
+	StartingPlayer int
+	CurrentPlayer  int
+	CurrentState   int
+	Deck           playingcards.Deck
+	Pile           playingcards.Pile
+	Trumph         playingcards.Rank
 }
 
 type Player struct {
@@ -26,9 +35,15 @@ const (
 
 // TODO make things private?
 func New(playersNo int) *State {
+	var startingPlayer int = rand.Int() % playersNo
+	return newWithStaringPlayer(playersNo, startingPlayer)
+}
+
+func newWithStaringPlayer(playersNo int, startingPlayer int) *State {
 	return &State{
 		make([]Player, playersNo),
-		0,
+		startingPlayer, startingPlayer,
+		STARTING,
 		playingcards.Create104Deck(),
 		make([]playingcards.Card, 0, 104),
 		playingcards.Rank(3)}
@@ -88,7 +103,15 @@ func (s *State) ThrowMove(player int, card playingcards.Card) error {
 
 	s.currentPlayerHand().Extract(card)
 	s.Pile.Push(card)
+	s.advancePlayer()
 
+	return nil
+}
+
+func (s *State) DoneMove(player int, groups []playingcards.Group) error {
+	if s.CurrentState == STARTING {
+		return &moveError{"you cannot finish in first round"}
+	}
 	return nil
 }
 
@@ -98,6 +121,10 @@ func (s *State) currentPlayerHand() *playingcards.Hand {
 
 func (s *State) advancePlayer() {
 	s.CurrentPlayer = (s.CurrentPlayer + 1) % len(s.Players)
+	if s.CurrentState == STARTING &&
+		s.CurrentPlayer == s.StartingPlayer {
+		s.CurrentState = PLAYING
+	}
 }
 
 func (s *State) applyTake(card playingcards.Card) {

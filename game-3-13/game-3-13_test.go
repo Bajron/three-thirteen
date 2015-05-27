@@ -56,7 +56,7 @@ func TestDeal(t *testing.T) {
 }
 
 func TestMove(t *testing.T) {
-	state := New(3)
+	state := newWithStaringPlayer(3, 0)
 	state.Deal()
 
 	card, err := state.TakeMove(2, TAKE_FROM_PILE)
@@ -86,7 +86,7 @@ func TestMove(t *testing.T) {
 	}
 
 	// reinitialized
-	state = New(3)
+	state = newWithStaringPlayer(3, 0)
 	state.Deal()
 
 	deckLen = len(state.Deck)
@@ -96,12 +96,11 @@ func TestMove(t *testing.T) {
 		t.Error("move should take a card from deck")
 	}
 
-	// TODO: throw move
 	// TODO: done move
 }
 
 func TestThrowMove(t *testing.T) {
-	state := New(3)
+	state := newWithStaringPlayer(3, 0)
 	state.Deal()
 
 	err := state.ThrowMove(0, (*state.currentPlayerHand())[0])
@@ -138,6 +137,54 @@ func TestThrowMove(t *testing.T) {
 	if state.Pile.Top() != card {
 		t.Error("thrown card should be on top of pile")
 	}
+}
+
+func TestStartingToPlayingTransition(t *testing.T) {
+	state := newWithStaringPlayer(3, 0)
+	state.Deal()
+
+	card, _ := state.TakeMove(0, TAKE_FROM_PILE)
+	state.ThrowMove(0, card)
+	if state.CurrentPlayer != 1 {
+		t.Error("current player should be 1")
+	}
+	card, _ = state.TakeMove(1, TAKE_FROM_PILE)
+	state.ThrowMove(1, card)
+	if state.CurrentState != STARTING {
+		t.Error("state should be still STARTING")
+	}
+	card, _ = state.TakeMove(2, TAKE_FROM_PILE)
+	state.ThrowMove(2, card)
+	if state.CurrentState != PLAYING {
+		t.Error("state should be PLAYING")
+	}
+	if state.CurrentPlayer != 0 {
+		t.Error("current player should be 0")
+	}
+}
+
+func TestDoneMove(t *testing.T) {
+	validDoneHand := playingcards.Hand{
+		{5, playingcards.HEARTS},
+		{6, playingcards.HEARTS},
+		{7, playingcards.HEARTS},
+	}
+	state := newWithStaringPlayer(3, 0)
+	state.Deal()
+
+	state.Players[0].Hand = validDoneHand
+
+	err := state.DoneMove(0, makeSingleGroupSetFromHand(validDoneHand))
+	if err == nil {
+		t.Error("you cannot finish in first round")
+	}
+}
+
+func makeSingleGroupSetFromHand(h playingcards.Hand) []playingcards.Group {
+	cards := []playingcards.Card(h)
+	ret := make([]playingcards.Group, 1)
+	ret[0] = cards
+	return ret
 }
 
 func (s State) curPlayerHasValidHand() bool {
