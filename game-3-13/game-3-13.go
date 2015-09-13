@@ -1,6 +1,7 @@
 package game313
 
 import (
+	"fmt"
 	"github.com/Bajron/three-thirteen/playingcards"
 	"math/rand"
 )
@@ -23,7 +24,7 @@ type State struct {
 }
 
 type Player struct {
-	Hand   playingcards.Hand
+	Hand   playingcards.Group
 	Points int
 }
 
@@ -131,15 +132,31 @@ func (s *State) DoneMove(player int, groups FinalGroups) error {
 	if len(groups.Unassigned) > 0 {
 		return &moveError{"first done cannot have unassigned cards"}
 	}
+	received := make(playingcards.Group, 0, int(s.Trumph))
 	for _, g := range groups.Set {
 		if !playingcards.IsSetOrSeq(g, s.getJockerMatch()) {
 			return &moveError{"invalid set provided"}
 		}
+		received = append(received, g...)
 	}
+	received = append(received, groups.Unassigned...)
+	if ll, lr := len(received), len(s.Players[player].Hand); ll != lr {
+		return &moveError{
+			fmt.Sprintf("card number does not match %d!=%d", ll, lr)}
+	}
+	for _, c := range received {
+		if !s.Players[player].Hand.Has(c) {
+			return &moveError{
+				fmt.Sprintf("not owned card detected %v", c)}
+		}
+	}
+
+	s.CurrentState = FINISHING
+
 	return nil
 }
 
-func (s *State) currentPlayerHand() *playingcards.Hand {
+func (s *State) currentPlayerHand() *playingcards.Group {
 	return &s.Players[s.CurrentPlayer].Hand
 }
 

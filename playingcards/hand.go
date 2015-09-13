@@ -4,15 +4,14 @@ import (
 	"sort"
 )
 
-type Hand []Card
 type Group []Card
 type RankMatch func(Rank) bool
 
-func (h Hand) Has(c Card) bool {
+func (h Group) Has(c Card) bool {
 	return findCard(h, c) != -1
 }
 
-func (h *Hand) Extract(c Card) {
+func (h *Group) Extract(c Card) {
 	i := findCard(*h, c)
 	if i != -1 {
 		*h = append((*h)[:i], (*h)[i+1:]...)
