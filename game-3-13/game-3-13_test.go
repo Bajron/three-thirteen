@@ -95,8 +95,6 @@ func TestMove(t *testing.T) {
 		err != nil || (deckLen-1) != len(state.Deck) {
 		t.Error("move should take a card from deck")
 	}
-
-	// TODO: done move
 }
 
 func TestThrowMove(t *testing.T) {
@@ -186,7 +184,24 @@ func TestDoneMove(t *testing.T) {
 		t.Error("you cannot finish not on your turn")
 	}
 
-	// TODO first done must have not unassigned cards
+	finalGroups := makeSingleGroupSetFromHand(validDoneHand)
+	finalGroups.Unassigned = playingcards.Group{{6, playingcards.CLUBS}}
+	err = state.DoneMove(0, finalGroups)
+	if err == nil {
+		t.Error("you should not finish with unassigned cards")
+	}
+
+	// remember 3 is the jocker
+	invalidDoneHand := playingcards.Hand{
+		{4, playingcards.HEARTS},
+		{6, playingcards.HEARTS},
+		{7, playingcards.HEARTS},
+	}
+	err = state.DoneMove(0, makeSingleGroupSetFromHand(invalidDoneHand))
+	if err == nil {
+		t.Error("you should not finish with invalid set")
+	}
+
 	// TODO completion round
 	// TODO points
 	// TODO advance to the next trumph game

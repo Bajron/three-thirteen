@@ -75,6 +75,12 @@ func (e *moveError) Error() string {
 	return e.msg
 }
 
+func (s *State) getJockerMatch() playingcards.RankMatch {
+	return func(r playingcards.Rank) bool {
+		return s.Trumph == r
+	}
+}
+
 func (s *State) TakeMove(player int, move Move) (playingcards.Card, error) {
 	if s.CurrentPlayer != player {
 		return playingcards.NIL_CARD, &moveError{"wrong player"}
@@ -121,6 +127,14 @@ func (s *State) DoneMove(player int, groups FinalGroups) error {
 	}
 	if s.CurrentPlayer != player {
 		return &moveError{"it is not your turn"}
+	}
+	if len(groups.Unassigned) > 0 {
+		return &moveError{"first done cannot have unassigned cards"}
+	}
+	for _, g := range groups.Set {
+		if !playingcards.IsSetOrSeq(g, s.getJockerMatch()) {
+			return &moveError{"invalid set provided"}
+		}
 	}
 	return nil
 }

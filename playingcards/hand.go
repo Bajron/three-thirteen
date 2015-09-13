@@ -6,7 +6,7 @@ import (
 
 type Hand []Card
 type Group []Card
-type rankMatch func(Rank) bool
+type RankMatch func(Rank) bool
 
 func (h Hand) Has(c Card) bool {
 	return findCard(h, c) != -1
@@ -31,7 +31,7 @@ func (g Group) Swap(i, j int) {
 	g[i], g[j] = g[j], g[i]
 }
 
-func IsSet(g Group, isJocker rankMatch) bool {
+func IsSet(g Group, isJocker RankMatch) bool {
 	if len(g) < 3 {
 		return false
 	}
@@ -46,7 +46,7 @@ func IsSet(g Group, isJocker rankMatch) bool {
 	return true
 }
 
-func firstNotJockerRank(g Group, isJocker rankMatch) (Rank, int) {
+func firstNotJockerRank(g Group, isJocker RankMatch) (Rank, int) {
 	var rank Rank
 	i := 0
 	for ; i < len(g) && isJocker(g[i].Rank); i++ {
@@ -62,7 +62,7 @@ func NewGroup(c ...Card) (g Group) {
 	return
 }
 
-func IsSequence(g Group, isJocker rankMatch) bool {
+func IsSequence(g Group, isJocker RankMatch) bool {
 	if len(g) < 3 {
 		return false
 	}
@@ -95,7 +95,11 @@ func IsSequence(g Group, isJocker rankMatch) bool {
 	return true
 }
 
-func sortPutJockersFirst(g Group, isJocker rankMatch) (firstNotJocker int) {
+func IsSetOrSeq(g Group, isJocker RankMatch) bool {
+	return IsSequence(g, isJocker) || IsSet(g, isJocker)
+}
+
+func sortPutJockersFirst(g Group, isJocker RankMatch) (firstNotJocker int) {
 	sort.Sort(g)
 
 	var i int = 0
