@@ -11,6 +11,12 @@ const (
 	PLAYING
 	FINISHING
 )
+const (
+	WAIT = iota
+	TAKE
+	THROW
+	DONE
+)
 
 type State struct {
 	Players        []Player
@@ -25,6 +31,7 @@ type State struct {
 
 type Player struct {
 	Hand   playingcards.Group
+	State  PlayerState
 	Points int
 }
 
@@ -33,6 +40,7 @@ type FinalGroups struct {
 	Unassigned playingcards.Group
 }
 
+type PlayerState int
 type Move int
 
 const (
@@ -47,7 +55,7 @@ func New(playersNo int) *State {
 }
 
 func newWithStaringPlayer(playersNo int, startingPlayer int) *State {
-	return &State{
+	ret := &State{
 		make([]Player, playersNo),
 		startingPlayer, startingPlayer,
 		STARTING,
@@ -55,6 +63,8 @@ func newWithStaringPlayer(playersNo int, startingPlayer int) *State {
 		make([]playingcards.Card, 0, 104),
 		make([]FinalGroups, playersNo),
 		playingcards.Rank(3)}
+	ret.Players[startingPlayer].State = TAKE
+	return ret
 }
 
 func (s *State) Deal() {
@@ -85,6 +95,9 @@ func (s *State) getJockerMatch() playingcards.RankMatch {
 func (s *State) TakeMove(player int, move Move) (playingcards.Card, error) {
 	if s.CurrentPlayer != player {
 		return playingcards.NIL_CARD, &moveError{"wrong player"}
+	}
+	if s.Players[player].State != TAKE {
+		return playingcards.NIL_CARD, &moveError{"already took"}
 	}
 	if int(s.Trumph) < len(*s.currentPlayerHand()) {
 		return playingcards.NIL_CARD, &moveError{"already took"}
@@ -117,8 +130,20 @@ func (s *State) ThrowMove(player int, card playingcards.Card) error {
 
 	s.currentPlayerHand().Extract(card)
 	s.Pile.Push(card)
-	s.advancePlayer()
+	s.Players[player].State = DONE
 
+	return nil
+}
+
+func (s *State) PassMove(player int) error {
+	if s.CurrentPlayer != player {
+		return &moveError{"move from invalid player"}
+	}
+	if s.Players[player].State != DONE {
+		return &moveError{"you need to do some moves first"}
+	}
+
+	s.advancePlayer()
 	return nil
 }
 
@@ -128,6 +153,9 @@ func (s *State) DoneMove(player int, groups FinalGroups) error {
 	}
 	if s.CurrentPlayer != player {
 		return &moveError{"it is not your turn"}
+	}
+	if s.Players[player].State != DONE {
+		return &moveError{"it should be last action in turn"}
 	}
 	if len(groups.Unassigned) > 0 {
 		return &moveError{"first done cannot have unassigned cards"}
@@ -152,6 +180,7 @@ func (s *State) DoneMove(player int, groups FinalGroups) error {
 	}
 
 	s.CurrentState = FINISHING
+	s.advancePlayer()
 
 	return nil
 }
@@ -161,7 +190,9 @@ func (s *State) currentPlayerHand() *playingcards.Group {
 }
 
 func (s *State) advancePlayer() {
+	s.Players[s.CurrentPlayer].State = WAIT
 	s.CurrentPlayer = (s.CurrentPlayer + 1) % len(s.Players)
+	s.Players[s.CurrentPlayer].State = TAKE
 	if s.CurrentState == STARTING &&
 		s.CurrentPlayer == s.StartingPlayer {
 		s.CurrentState = PLAYING
@@ -171,4 +202,5 @@ func (s *State) advancePlayer() {
 func (s *State) applyTake(card playingcards.Card) {
 	s.Players[s.CurrentPlayer].Hand =
 		append(s.Players[s.CurrentPlayer].Hand, card)
+	s.Players[s.CurrentPlayer].State = THROW
 }
