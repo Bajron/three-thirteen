@@ -16,7 +16,7 @@ func TestCreate52Deck(t *testing.T) {
 func TestCreate104Deck(t *testing.T) {
 	deck := Create104Deck()
 	if len(deck) != 104 {
-		t.Errorf("deck has %d cards instead of 104", len(deck));
+		t.Errorf("deck has %d cards instead of 104", len(deck))
 	}
 
 	var idx int
@@ -30,6 +30,24 @@ func TestCreate104Deck(t *testing.T) {
 	}
 }
 
+func TestShuffle(t *testing.T) {
+	d1 := Create104Deck()
+	d2 := Create104Deck()
+	d1.Shuffle()
+	for i := range d1 {
+		if d1[i] != d2[i] {
+			return
+		}
+	}
+	d1.Shuffle()
+	for i := range d1 {
+		if d1[i] != d2[i] {
+			return
+		}
+	}
+	t.Error("decks should be different after shuffling")
+}
+
 func TestFind(t *testing.T) {
 	deck := Deck(make([]Card, 0))
 	if -1 != deck.Find(Card{ACE, SPADES}) {
@@ -38,7 +56,7 @@ func TestFind(t *testing.T) {
 
 	deck = Deck(make([]Card, 1))
 	deck[0] = Card{ACE, SPADES}
-	
+
 	if 0 != deck.Find(Card{ACE, SPADES}) {
 		t.Error("not found inserted card")
 	}
@@ -50,7 +68,7 @@ func TestDraw(t *testing.T) {
 	if 51 != len(deck) {
 		t.Error("draw did not reduce length")
 	}
-	
+
 	deck = Deck(make([]Card, 0))
 	card := deck.Draw()
 	if 0 != len(deck) {
@@ -80,4 +98,3 @@ func TestPop(t *testing.T) {
 		t.Error("you should see top element from a pile")
 	}
 }
-

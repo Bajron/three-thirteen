@@ -364,6 +364,31 @@ func TestPass(t *testing.T) {
 	}
 }
 
+func TestPileShuffling(t *testing.T) {
+	state := newWithStaringPlayer(3, 0)
+	state.Deal()
+	// 3*3 +1 / 104; 94/3=31
+	for i := 0; i < 31; i++ {
+		for p := 0; p < 3; p++ {
+			card, _ := state.TakeMove(p, TAKE_FROM_DECK)
+			state.ThrowMove(p, card)
+			state.PassMove(p)
+		}
+	}
+	// 1 card on deck
+	if len(state.Deck) != 1 {
+		t.Error("setup failed")
+	}
+
+	card, _ := state.TakeMove(0, TAKE_FROM_DECK)
+	state.ThrowMove(0, card)
+	state.PassMove(0)
+
+	if len(state.Deck) != 94 {
+		t.Error("deck should be recovered from pile")
+	}
+}
+
 func prepareStateWithHand(player int, players int, hand playingcards.Group) *State {
 	state := newWithStaringPlayer(players, player)
 	prepareDeck(state.Deck, player, players, hand)

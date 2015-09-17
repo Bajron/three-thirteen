@@ -1,5 +1,7 @@
 package playingcards
 
+import "math/rand"
+
 type Deck []Card
 type Pile []Card
 
@@ -32,8 +34,8 @@ func findCard(cards []Card, c Card) int {
 	return -1
 }
 
-func (deck *Deck) Find(c Card) int {
-	return findCard(*deck, c)
+func (deck Deck) Find(c Card) int {
+	return findCard(deck, c)
 }
 
 func (deck *Deck) Draw() (c Card) {
@@ -43,6 +45,13 @@ func (deck *Deck) Draw() (c Card) {
 	c = (*deck)[0]
 	*deck = (*deck)[1:]
 	return
+}
+
+func (deck Deck) Shuffle() {
+	for i := len(deck) - 1; i > 0; i-- {
+		j := rand.Intn(i + 1)
+		deck[i], deck[j] = deck[j], deck[i]
+	}
 }
 
 func (pile *Pile) Push(card Card) {
@@ -57,16 +66,16 @@ func (pile *Pile) Pop() Card {
 	return c
 }
 
-func (pile *Pile) Top() Card {
+func (pile Pile) Top() Card {
 	c, _ := pile.getLast()
 	return c
 }
 
-func (pile *Pile) getLast() (c Card, i int) {
-	if len(*pile) <= 0 {
+func (pile Pile) getLast() (c Card, i int) {
+	if len(pile) <= 0 {
 		return NIL_CARD, -1
 	}
-	idx := len(*pile) - 1
-	c = (*pile)[idx]
+	idx := len(pile) - 1
+	c = (pile)[idx]
 	return c, idx
 }

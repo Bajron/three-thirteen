@@ -144,7 +144,16 @@ func (s *State) ThrowMove(player int, card playingcards.Card) error {
 	s.Pile.Push(card)
 	s.Players[player].State = DONE
 
+	if len(s.Deck) == 0 {
+		s.shufflePileForDeck()
+	}
+
 	return nil
+}
+
+func (s *State) shufflePileForDeck() {
+	s.Deck = append(s.Deck, s.Pile[:len(s.Pile)-1]...)
+	s.Deck.Shuffle()
 }
 
 func (s *State) PassMove(player int) error {
