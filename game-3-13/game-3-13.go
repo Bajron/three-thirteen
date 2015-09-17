@@ -7,7 +7,8 @@ import (
 )
 
 const (
-	STARTING = iota
+	FINISHED = iota
+	STARTING
 	PLAYING
 	FINISHING
 )
@@ -86,6 +87,14 @@ func (e *moveError) Error() string {
 	return e.msg
 }
 
+type gameError struct {
+	msg string
+}
+
+func (e *gameError) Error() string {
+	return e.msg
+}
+
 func (s *State) getJockerMatch() playingcards.RankMatch {
 	return func(r playingcards.Rank) bool {
 		return s.Trumph == r
@@ -93,6 +102,9 @@ func (s *State) getJockerMatch() playingcards.RankMatch {
 }
 
 func (s *State) TakeMove(player int, move Move) (playingcards.Card, error) {
+	if s.CurrentState == FINISHED {
+		return playingcards.NIL_CARD, &moveError{"you cannot take, round is finished"}
+	}
 	if s.CurrentPlayer != player {
 		return playingcards.NIL_CARD, &moveError{"wrong player"}
 	}
@@ -136,6 +148,9 @@ func (s *State) ThrowMove(player int, card playingcards.Card) error {
 }
 
 func (s *State) PassMove(player int) error {
+	if s.CurrentState == FINISHING {
+		return &moveError{"you cannot pass during final round"}
+	}
 	if s.CurrentPlayer != player {
 		return &moveError{"move from invalid player"}
 	}
@@ -157,7 +172,7 @@ func (s *State) DoneMove(player int, groups FinalGroups) error {
 	if s.Players[player].State != DONE {
 		return &moveError{"it should be last action in turn"}
 	}
-	if len(groups.Unassigned) > 0 {
+	if len(groups.Unassigned) > 0 && s.CurrentState != FINISHING {
 		return &moveError{"first done cannot have unassigned cards"}
 	}
 	received := make(playingcards.Group, 0, int(s.Trumph))
@@ -179,9 +194,35 @@ func (s *State) DoneMove(player int, groups FinalGroups) error {
 		}
 	}
 
+	s.FinalGroups[player] = groups
+	s.Players[player].Hand = s.Players[player].Hand[:0]
 	s.CurrentState = FINISHING
 	s.advancePlayer()
 
+	return nil
+}
+
+func (s *State) AdvanceRound() error {
+	if s.CurrentState != FINISHED {
+		return &gameError{"round is not finished yet"}
+	}
+	for i := 0; i < len(s.Players); i++ {
+		for _, c := range s.FinalGroups[i].Unassigned {
+			if c.Rank > 10 {
+				s.Players[i].Points += 10
+			} else {
+				s.Players[i].Points += int(c.Rank)
+			}
+		}
+	}
+	s.FinalGroups = make([]FinalGroups, len(s.Players))
+	if s.Trumph < 14 {
+		s.Trumph++
+		s.Deck = playingcards.Create104Deck()
+	} else {
+		s.Deck = make(playingcards.Deck, 0)
+	}
+	s.Pile = s.Pile[:0]
 	return nil
 }
 
@@ -196,6 +237,10 @@ func (s *State) advancePlayer() {
 	if s.CurrentState == STARTING &&
 		s.CurrentPlayer == s.StartingPlayer {
 		s.CurrentState = PLAYING
+	}
+	if s.CurrentState == FINISHING &&
+		s.CurrentPlayer == s.StartingPlayer {
+		s.CurrentState = FINISHED
 	}
 }
 

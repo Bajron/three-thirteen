@@ -251,9 +251,73 @@ func TestDoneMove(t *testing.T) {
 		t.Error("current player should be 1")
 	}
 
-	// TODO completion round
-	// TODO points
-	// TODO advance to the next trumph game
+	// completion
+	takeAndThrow(state, 1)
+	err = state.DoneMove(1, makeAllUnassigned(state, 1))
+	assertNoError(t, err)
+	takeAndThrow(state, 2)
+	err = state.DoneMove(2, makeAllUnassigned(state, 2))
+	assertNoError(t, err)
+
+	if state.CurrentState != FINISHED {
+		t.Error("game should be finished after final round")
+	}
+
+	_, err = state.TakeMove(0, TAKE_FROM_PILE)
+	if err == nil {
+		t.Error("no moves should be possible after finishing round")
+	}
+
+	state.AdvanceRound()
+	if state.Players[0].Points != 0 {
+		t.Error("player with no unassigned should have 0 points")
+	}
+	if state.Players[1].Points == 0 {
+		t.Error("player with unassigned should not have 0 points")
+	}
+	if state.Trumph != 4 {
+		t.Error("trumph should be advanced")
+	}
+	for i := 0; i < 3; i++ {
+		if len(state.Players[i].Hand) > 0 {
+			t.Error("hands should be cleared")
+		}
+		if len(state.FinalGroups[i].Set) > 0 || len(state.FinalGroups[i].Unassigned) > 0 {
+			t.Error("final groups should be cleared")
+		}
+	}
+	if len(state.Pile) != 0 {
+		t.Error("pile should be empty")
+	}
+	if len(state.Deck) != 104 {
+		t.Error("deck should be reset")
+	}
+}
+
+func TestAdvanceRound(t *testing.T) {
+	state := newWithStaringPlayer(3, 0)
+	state.Deal()
+
+	err := state.AdvanceRound()
+	if err == nil {
+		t.Error("you should not advance round when it is not finished")
+	}
+
+	state.CurrentState = FINISHED
+	state.Trumph = 14
+	err = state.AdvanceRound()
+	if state.Trumph != 14 {
+		t.Error("you should not advance after trumph 14")
+	}
+	if len(state.Deck) != 0 || len(state.Pile) != 0 {
+		t.Error("deck and pile should be removed after t14")
+	}
+}
+
+func assertNoError(t *testing.T, e error) {
+	if e != nil {
+		t.Errorf("unexpected error: %v", e)
+	}
 }
 
 func TestPass(t *testing.T) {
@@ -280,6 +344,14 @@ func TestPass(t *testing.T) {
 		t.Error("you should not act as different player")
 	}
 
+	state.CurrentState = FINISHING
+	err = state.PassMove(0)
+	if err == nil {
+		t.Error("you should only do Done move on final round")
+	}
+
+	state.CurrentState = PLAYING
+
 	err = state.PassMove(0)
 	if err != nil {
 		t.Error("you should be able to succeed with PassMove")
@@ -300,8 +372,8 @@ func prepareStateWithHand(player int, players int, hand playingcards.Group) *Sta
 }
 
 func takeAndThrow(state *State, player int) {
-	card, _ := state.TakeMove(0, TAKE_FROM_PILE)
-	state.ThrowMove(0, card)
+	card, _ := state.TakeMove(player, TAKE_FROM_PILE)
+	state.ThrowMove(player, card)
 }
 
 func prepareDeck(d playingcards.Deck, player int, players int, hand playingcards.Group) playingcards.Deck {
@@ -323,6 +395,10 @@ func makeSingleGroupSetFromHand(h playingcards.Group) FinalGroups {
 	groups := make([]playingcards.Group, 1)
 	groups[0] = cards
 	return FinalGroups{groups, playingcards.Group{}}
+}
+
+func makeAllUnassigned(state *State, player int) FinalGroups {
+	return FinalGroups{nil, state.Players[player].Hand}
 }
 
 func (s State) curPlayerHasValidHand() bool {
