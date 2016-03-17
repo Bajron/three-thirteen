@@ -1,1 +1,3 @@
 .*swp
+generate_cert*
+*.pem
