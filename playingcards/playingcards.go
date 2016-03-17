@@ -15,7 +15,7 @@ var NIL_CARD = Card{-1, -1}
 
 func init() {
 	SUITS = make([]Suit, SUIT_COUNT)
-	for i := uint(1); (1 << i) != SUIT_GUARD; i++ {
+	for i := uint(0); (1 << i) != SUIT_GUARD; i++ {
 		SUITS[i] = Suit(1 << i)
 	}
 	RANKS = make([]Rank, RANK_COUNT)
@@ -40,7 +40,21 @@ func (c Card) UString() string {
 	if base == utf8.RuneError {
 		return "???"
 	}
+	if c.Rank == JOCKER {
+		if c.Suit&BLACK > 0 {
+			base = 0x1f0cf
+		}
+		if c.Suit&RED > 0 {
+			// this is white jocker, but red implementation
+			// is so rare FIXME
+			base = 0x1f0df
+		}
+	}
 	card := rune(int(base) + int(c.Rank))
+	if c.Rank > JACK {
+		// There is Knight after Jack in the representation.
+		card++
+	}
 	ret := make([]byte, utf8.RuneLen(card))
 	utf8.EncodeRune(ret, card)
 	return fmt.Sprint(string(ret))
@@ -103,6 +117,11 @@ const (
 	SUIT_COUNT = 4
 )
 
+const (
+	BLACK = CLUBS | SPADES
+	RED   = DIAMONDS | HEARTS
+)
+
 func getBaseUnicodeCard(s Suit) rune {
 	switch s {
 	case CLUBS:
@@ -128,6 +147,10 @@ func (s Suit) String() string {
 		return "S"
 	case HEARTS:
 		return "H"
+	case BLACK:
+		return "B"
+	case RED:
+		return "R"
 	default:
 		return "?"
 	}
@@ -136,13 +159,17 @@ func (s Suit) String() string {
 func (s Suit) UString() string {
 	switch s {
 	case CLUBS:
-		return "\u2664"
+		return "\u2663"
 	case DIAMONDS:
 		return "\u2666"
 	case SPADES:
 		return "\u2660"
 	case HEARTS:
 		return "\u2665"
+	case BLACK:
+		return "B"
+	case RED:
+		return "R"
 	default:
 		return "?"
 	}
