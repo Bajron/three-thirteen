@@ -42,6 +42,8 @@ func TestDeal(t *testing.T) {
 	state := New(3)
 	state.Deal()
 
+	firstFew := state.Deck[0:5]
+
 	if l := len(state.Players[0].Hand); l != 3 {
 		t.Errorf("initial hand should have 3 cards (has %d)", l)
 	}
@@ -52,6 +54,14 @@ func TestDeal(t *testing.T) {
 
 	if len(state.Deck) != (104 - 3*3 - 1) {
 		t.Error("deck should not have already dealed cards")
+	}
+
+	state.Deal()
+	firstFewNow := state.Deck[0:len(firstFew)]
+	for i, v := range firstFew {
+		if v != firstFewNow[i] {
+			t.Error("second deal should have no effect")
+		}
 	}
 }
 
@@ -72,6 +82,10 @@ func TestMove(t *testing.T) {
 	card, err = state.TakeMove(0, TAKE_FROM_PILE)
 	if card != onPile || err != nil {
 		t.Error("move should return a card from the pile")
+	}
+
+	if len(state.Players[0].Hand) != 4 {
+		t.Error("player's hand should have more cards")
 	}
 
 	if state.Players[0].Hand[len(state.Players[0].Hand)-1] != onPile {
@@ -295,6 +309,26 @@ func TestDoneMove(t *testing.T) {
 }
 
 func TestAdvanceRound(t *testing.T) {
+	state := initPreAdvance(t)
+	state.Trumph = playingcards.ACE
+	state.AdvanceRound()
+	if state.Trumph != playingcards.ACE {
+		t.Error("you should not advance after trumph ACE")
+	}
+	if len(state.Deck) != 0 || len(state.Pile) != 0 {
+		t.Error("deck and pile should be removed after trumph ACE")
+	}
+
+	state = initPreAdvance(t)
+	state.Trumph = playingcards.KING
+	state.AdvanceRound()
+
+	if state.Trumph != playingcards.ACE {
+		t.Error("you should advance from KING to ACE")
+	}
+}
+
+func initPreAdvance(t *testing.T) *State {
 	state := newWithStaringPlayer(3, 0)
 	state.Deal()
 
@@ -304,14 +338,7 @@ func TestAdvanceRound(t *testing.T) {
 	}
 
 	state.CurrentState = FINISHED
-	state.Trumph = 14
-	err = state.AdvanceRound()
-	if state.Trumph != 14 {
-		t.Error("you should not advance after trumph 14")
-	}
-	if len(state.Deck) != 0 || len(state.Pile) != 0 {
-		t.Error("deck and pile should be removed after t14")
-	}
+	return state
 }
 
 func assertNoError(t *testing.T, e error) {

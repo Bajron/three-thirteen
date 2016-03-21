@@ -6,12 +6,16 @@ import (
 	"math/rand"
 )
 
+// Game states
 const (
-	FINISHED = iota
+	NOT_DEALT = iota
+	FINISHED
 	STARTING
 	PLAYING
 	FINISHING
 )
+
+// Player states
 const (
 	WAIT = iota
 	TAKE
@@ -44,9 +48,13 @@ type FinalGroups struct {
 type PlayerState int
 type Move int
 
+// Move types
 const (
 	TAKE_FROM_PILE = iota
 	TAKE_FROM_DECK
+	THROW_CARD
+	PASS_TURN
+	DECLARE_DONE
 )
 
 // TODO make things private?
@@ -59,7 +67,7 @@ func newWithStaringPlayer(playersNo int, startingPlayer int) *State {
 	ret := &State{
 		make([]Player, playersNo),
 		startingPlayer, startingPlayer,
-		STARTING,
+		NOT_DEALT,
 		playingcards.Create104Deck(),
 		make([]playingcards.Card, 0, 104),
 		make([]FinalGroups, playersNo),
@@ -68,8 +76,19 @@ func newWithStaringPlayer(playersNo int, startingPlayer int) *State {
 	return ret
 }
 
+func (s *State) CardsToDeal() int {
+	if s.Trumph != playingcards.ACE {
+		return int(s.Trumph)
+	}
+	return 14
+}
+
 func (s *State) Deal() {
-	for c := 0; c < int(s.Trumph); c++ {
+	if s.CurrentState != NOT_DEALT {
+		return
+	}
+	ctd := s.CardsToDeal()
+	for c := 0; c < ctd; c++ {
 		for i := 0; i < len(s.Players); i++ {
 			ii := (s.CurrentPlayer + i) % len(s.Players)
 			s.Players[ii].Hand =
@@ -77,6 +96,7 @@ func (s *State) Deal() {
 		}
 	}
 	s.Pile = append(s.Pile, s.Deck.Draw())
+	s.CurrentState = STARTING
 }
 
 type moveError struct {
@@ -225,13 +245,18 @@ func (s *State) AdvanceRound() error {
 		}
 	}
 	s.FinalGroups = make([]FinalGroups, len(s.Players))
-	if s.Trumph < 14 {
-		s.Trumph++
+	if s.Trumph != playingcards.ACE {
+		if s.Trumph < playingcards.KING {
+			s.Trumph++
+		} else {
+			s.Trumph = playingcards.ACE
+		}
 		s.Deck = playingcards.Create104Deck()
 	} else {
 		s.Deck = make(playingcards.Deck, 0)
 	}
 	s.Pile = s.Pile[:0]
+	s.CurrentState = NOT_DEALT
 	return nil
 }
 
