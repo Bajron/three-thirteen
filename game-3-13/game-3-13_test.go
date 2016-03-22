@@ -282,6 +282,7 @@ func TestDoneMove(t *testing.T) {
 		t.Error("no moves should be possible after finishing round")
 	}
 
+	prevStarting := state.StartingPlayer
 	state.AdvanceRound()
 	if state.Players[0].Points != 0 {
 		t.Error("player with no unassigned should have 0 points")
@@ -291,6 +292,9 @@ func TestDoneMove(t *testing.T) {
 	}
 	if state.Trumph != 4 {
 		t.Error("trumph should be advanced")
+	}
+	if state.StartingPlayer == prevStarting {
+		t.Error("dealer should advance with round")
 	}
 	for i := 0; i < 3; i++ {
 		if len(state.Players[i].Hand) > 0 {

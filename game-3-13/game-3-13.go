@@ -257,6 +257,7 @@ func (s *State) AdvanceRound() error {
 	}
 	s.Pile = s.Pile[:0]
 	s.CurrentState = NOT_DEALT
+	s.StartingPlayer = (s.StartingPlayer + 1) % len(s.Players)
 	return nil
 }
 
