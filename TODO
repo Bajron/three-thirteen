@@ -1,0 +1,28 @@
+
+Ideas to implement
+
+* HTTP server
+
+root/
+ ?<cmd>
+ ?list=10,10
+ ?new[=tt] & name=easylink
+
+root/<table>
+ *spectator view
+ *first visitor gets admin cookie
+ ?updates=<from>
+ ?add[=playerid]
+
+root/<table>/<player>
+ & token = seq ; for next actions verification
+ move=<move>
+
+
+* Score history
+* Game history
+
+Long term:
+- more games
+- scripting games (define pile, define moves, points etc.)
+
