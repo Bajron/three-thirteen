@@ -60,7 +60,7 @@ func (pile *Pile) Push(card Card) {
 
 func (pile *Pile) Pop() Card {
 	c, idx := pile.getLast()
-	if idx > 0 {
+	if idx >= 0 {
 		*pile = (*pile)[:idx]
 	}
 	return c
