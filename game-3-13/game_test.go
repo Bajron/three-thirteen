@@ -26,6 +26,11 @@ func TestGame(t *testing.T) {
 		t.Error("session should have initialized state")
 	}
 
+	mErr := session.Marshal(GameCommand{DEAL})
+	if mErr != nil {
+		t.Error("deal should not fail")
+	}
+
 	current := session.state.CurrentPlayer
 	cmd := NewTakeCommand(current, TAKE_FROM_PILE)
 
@@ -40,10 +45,21 @@ func TestGame(t *testing.T) {
 	if postState.PileTop != playingcards.NIL_CARD {
 		t.Error("state should be updated with empty pile")
 	}
-	/* TODO fix dealing
 	if postState.Players[current].CardsInHand != 4 {
 		t.Errorf("hands' state should be updated (%d != 4)",
 			postState.Players[current].CardsInHand)
 	}
-	*/
+
+	if len(session.history) != 1 {
+		t.Error("commands should be kept in history")
+	}
+
+	invalidCmd := NewThrowCommand(current+1, card)
+	card, err = session.Dispatch(invalidCmd)
+	if err == nil {
+		t.Error("error should be propagated by Dispatch")
+	}
+	if len(session.history) != 1 {
+		t.Error("invalid command should not be put to history")
+	}
 }
