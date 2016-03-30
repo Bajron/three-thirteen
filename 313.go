@@ -7,6 +7,7 @@ import (
 	"github.com/Bajron/three-thirteen/playingcards"
 	"github.com/gorilla/mux"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -40,6 +41,39 @@ func NewGameServer() *GameServer {
 	}
 }
 
+type CodesTranslations struct {
+	Cards          map[string]string
+	GameStates     map[string]string
+	PlayerStates   map[string]string
+	GameCommands   map[string]string
+	PlayerCommands map[string]string
+}
+
+func stringifyMap(m map[int]string) map[string]string {
+	r := make(map[string]string)
+	for k, v := range m {
+		r[fmt.Sprint(k)] = v
+	}
+	return r
+}
+
+func GetCodesTranslation() CodesTranslations {
+	m := make(map[string]string)
+	for _, s := range playingcards.SUITS {
+		for _, r := range playingcards.RANKS {
+			c := playingcards.Card{r, s}
+			m[c.String()] = c.UString()
+		}
+	}
+	return CodesTranslations{
+		m,
+		stringifyMap(game313.GAME_STATES),
+		stringifyMap(game313.PLAYER_STATES),
+		stringifyMap(game313.GAME_COMMANDS),
+		stringifyMap(game313.PLAYER_COMMANDS),
+	}
+}
+
 func main() {
 	visualTest()
 
@@ -55,9 +89,15 @@ func main() {
 		fmt.Fprintf(w, "Ups. Nothing special here :C\n")
 	})
 
+	serveMux.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static/"))))
+
 	ttRouter.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		q := r.URL.Query()
-		if values, ok := q["create"]; ok && len(values) > 0 && len(values[0]) > 0 {
+		if _, ok := q["help"]; ok {
+			fmt.Fprintln(w, "<html><body><pre>")
+			fmt.Fprintln(w, "Available commands: help, create, list")
+			fmt.Fprintln(w, "</pre></body></html>")
+		} else if values, ok := q["create"]; ok && len(values) > 0 && len(values[0]) > 0 {
 			name := values[0]
 			_, has := gameServer.Sessions[name]
 			if has {
@@ -85,6 +125,8 @@ func main() {
 				i++
 			}
 			jsonOrError(w, l)
+		} else if _, ok := q["translations"]; ok {
+			jsonOrError(w, GetCodesTranslation())
 		} else {
 			fmt.Fprintln(w, "<html><body><ul>")
 			for k := range gameServer.Sessions {
@@ -115,11 +157,33 @@ func main() {
 			return
 		}
 		player := vars["player"]
+		var playerIndex int
 		for i, v := range s.Players {
 			if v == player {
-				fmt.Fprintf(w, "Player index: %d\n", i)
+				playerIndex = i
+				break
 			}
 		}
+
+		q := r.URL.Query()
+		if _, ok := q["help"]; ok {
+			fmt.Fprintf(w, "Available commands:\n")
+			fmt.Fprintf(w, "?marshal=[%d:deal|%d:nextround|%d:nextgame|]\n",
+				game313.DEAL, game313.NEXT_TRUMPH, game313.NEXT_GAME)
+		} else if values, ok := q["marshal"]; ok && len(values) > 0 && len(values[0]) > 0 {
+			if playerIndex != 0 {
+				fmt.Fprintf(w, "Error: only player 0 can marshal the game")
+				return
+			}
+
+			m, err := strconv.Atoi(values[0])
+			if err != nil {
+				fmt.Fprintf(w, "Error: %v", err)
+				return
+			}
+			s.Session.Marshal(game313.NewGameCommand(m))
+		}
+
 		pdata := s.Session.GetTableState()
 		jsonOrError(w, pdata)
 	})

@@ -4,6 +4,38 @@ import (
 	"github.com/Bajron/three-thirteen/playingcards"
 )
 
+var GAME_COMMANDS map[int]string = nil
+var PLAYER_COMMANDS map[int]string = nil
+var GAME_STATES map[int]string = nil
+var PLAYER_STATES map[int]string = nil
+
+func init() {
+	GAME_COMMANDS = make(map[int]string)
+	GAME_COMMANDS[DEAL] = "DEAL"
+	GAME_COMMANDS[NEXT_TRUMPH] = "NEXT_TRUMPH"
+	GAME_COMMANDS[NEXT_GAME] = "NEXT_GAME"
+
+	PLAYER_COMMANDS = make(map[int]string)
+	PLAYER_COMMANDS[TAKE_FROM_PILE] = "TAKE_FROM_PILE"
+	PLAYER_COMMANDS[TAKE_FROM_DECK] = "TAKE_FROM_DECK"
+	PLAYER_COMMANDS[THROW_CARD] = "THROW_CARD"
+	PLAYER_COMMANDS[PASS_TURN] = "PASS_TURN"
+	PLAYER_COMMANDS[DECLARE_DONE] = "DECLARE_DONE"
+
+	GAME_STATES = make(map[int]string)
+	GAME_STATES[NOT_DEALT] = "NOT_DEALT"
+	GAME_STATES[FINISHED] = "FINISHED"
+	GAME_STATES[STARTING] = "STARTING"
+	GAME_STATES[PLAYING] = "PLAYING"
+	GAME_STATES[FINISHING] = "FINISHING"
+
+	PLAYER_STATES = make(map[int]string)
+	PLAYER_STATES[WAIT] = "WAIT"
+	PLAYER_STATES[TAKE] = "TAKE"
+	PLAYER_STATES[THROW] = "THROW"
+	PLAYER_STATES[DONE] = "DONE"
+}
+
 type PublicStateView struct {
 	Players        []PublicPlayerView
 	StartingPlayer int
@@ -66,6 +98,10 @@ const (
 // Higher level game marshal commands
 type GameCommand struct {
 	Move int
+}
+
+func NewGameCommand(m int) GameCommand {
+	return GameCommand{m}
 }
 
 func NewTakeCommand(p int, t int) MoveCommand {
@@ -142,14 +178,4 @@ func (gs *GameSession) Marshal(cmd GameCommand) error {
 
 func (gs *GameSession) GetTableState() *PublicStateView {
 	return GetPublicStateView(gs.state)
-}
-
-type GameServer struct {
-	Sessions map[string]*GameSession
-}
-
-func NewGameServer() *GameServer {
-	return &GameServer{
-		make(map[string]*GameSession),
-	}
 }
