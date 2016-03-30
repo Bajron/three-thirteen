@@ -1,0 +1,74 @@
+<html>
+<head>
+<TITLE>Testing JS</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <SCRIPT type="text/javascript" src="jquery-2.2.2.min.js" ></SCRIPT>
+    <SCRIPT type="text/javascript" src="jquery-ui-1.11.4/jquery-ui.min.js" ></SCRIPT>
+
+<SCRIPT type="text/javascript">
+jQuery(document).ready(function(){
+    $('.hand').sortable({
+    	placeholder: 'hand-placeholder',
+        //containment: 'parent',
+    });
+    $('.hand').disableSelection();
+
+    //$('.hand').sortable('option', 'revert', 250);
+});
+</SCRIPT>
+
+<STYLE>
+	div.hwrap {
+		background-color: pink;
+	}
+	ul.hand {
+		list-style-type: none;
+		border: 1px solid red;
+		padding: 5px 30px 15px 30px;
+	}
+	.hand li {
+		display: inline-block;
+		padding: 0;
+	}
+
+	li.card {
+		margin-top: 14px;
+	}
+	.card {
+		margin-left: -5px; /* it gets bigger after move */
+		background-color: white;
+		border-radius: 3px;
+	}
+	.cwrap {
+		border: 0; padding: 0;
+		font-size: 30px;
+		width: 28px;
+		margin-left: -3px;
+		display: inline-block;
+	}
+	
+	.hand-placeholder {
+		display: inline-block;
+		border-radius: 3px;
+		border: 1px solid cyan;
+		width: 26px;
+		height: 37px;
+		margin: 0;
+		padding: 0;
+		margin-left: -5px; /* it gets bigger after move */
+	}
+</STYLE>
+
+</head>
+<body>
+<div class="hwrap">
+<ul class="hand">
+<li class="card"><span class="cwrap">🃙</span></li>
+<li class="card"><span class="cwrap">🃚</span></li>
+<li class="card"><span class="cwrap">🃛</span></li>
+<li class="card"><span class="cwrap">🃝</span></li>
+<li class="card"><span class="cwrap">🃞</span></li>
+</ul>
+</div>
+</body>
+</html>
