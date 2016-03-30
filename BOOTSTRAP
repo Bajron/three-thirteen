@@ -1,0 +1,43 @@
+#!/bin/bash
+
+MDIR=$(dirname $(readlink -f "${BASH_SOURCE[0]}"))
+TMPD="${MDIR}/tmp"
+
+mkdir -p "${TMPD}"
+WGET=(wget -P "${TMPD}")
+function download() { "${WGET[@]}" "${@}"; }
+
+JQ="jquery-2.2.2.min.js"
+UI="jquery-ui-1.11.4"
+
+function fetch() {
+    download "https://code.jquery.com/${JQ}"
+    download "https://jqueryui.com/resources/download/${UI}.zip"
+    download https://golang.org/src/crypto/tls/generate_cert.go?m=text -O "${TMPD}/generate_cert.go"
+}
+
+function prepare_jquery() {
+    cp -r "${TMPD}/${JQ}" "${MDIR}/static/"
+    cd "${TMPD}" && unzip "${UI}.zip" && cd -
+    cp -r "${TMPD}/${UI}" "${MDIR}/static/"
+}
+
+function prepare_cert() {
+    cd "${TMPD}" && go build generate_cert.go && cd -
+    "${TMPD}/generate_cert" --host localhost
+}
+
+function all() {
+    fetch
+    prepare_jquery
+    prepare_cert
+}
+
+function main() {
+    all
+}
+
+if [ "${0}" == "${BASH_SOURCE[0]}" ] ; then
+    main "${@}"
+fi
+

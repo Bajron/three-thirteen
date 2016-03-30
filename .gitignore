@@ -3,3 +3,4 @@ generate_cert*
 *.pem
 three-thirteen
 tmp
+jquery*
