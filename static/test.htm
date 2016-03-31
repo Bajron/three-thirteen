@@ -2,73 +2,80 @@
 <head>
 <TITLE>Testing JS</TITLE>
     <META http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <LINK rel="stylesheet" href="style.css" type="text/css">
     <SCRIPT type="text/javascript" src="jquery-2.2.2.min.js" ></SCRIPT>
     <SCRIPT type="text/javascript" src="jquery-ui-1.11.4/jquery-ui.min.js" ></SCRIPT>
 
 <SCRIPT type="text/javascript">
+var ct = null; // code translations 
+function setTranslations(data) {
+    console.log('setting translations');
+    ct = data;
+}
+
+function cardHtml(c) {
+    var str;
+    str =  '<span class="card"><span class="cwrap">';
+    str += c;
+    str += '</span></span>';
+    return str;
+}
+
+function cardAsciiToUc(a) {
+    return ''+ ct.Cards[a];
+}
+
+function cardToAscii(obj) {
+    return ''+ ct.Ranks[obj.Rank] + ct.Suits[obj.Suit];
+}
+
 jQuery(document).ready(function(){
     $('.hand').sortable({
     	placeholder: 'hand-placeholder',
         //containment: 'parent',
+        revert: 250,
     });
     $('.hand').disableSelection();
-
-    //$('.hand').sortable('option', 'revert', 250);
+    
+    $.ajax({
+        url: "/3-13/?translations",
+        dataType: 'json',
+        success: setTranslations
+    }).done(function() {
+        $.ajax({
+            url: "/3-13/test/",
+            dataType: 'json',
+        }).done(function(data, status) {
+            var pc = cardToAscii(data.PileTop);
+            pc = cardAsciiToUc(pc);
+            $('#tt-pile').html(cardHtml(pc));
+            $('#tt-deck').html(cardHtml('🂠'));
+            console.log('got game status: '+html);
+        });
+    });
 });
 </SCRIPT>
 
-<STYLE>
-	div.hwrap {
-		background-color: pink;
-	}
-	ul.hand {
-		list-style-type: none;
-		border: 1px solid red;
-		padding: 5px 30px 15px 30px;
-	}
-	.hand li {
-		display: inline-block;
-		padding: 0;
-	}
-
-	li.card {
-		margin-top: 14px;
-	}
-	.card {
-		margin-left: -5px; /* it gets bigger after move */
-		background-color: white;
-		border-radius: 3px;
-	}
-	.cwrap {
-		border: 0; padding: 0;
-		font-size: 30px;
-		width: 28px;
-		margin-left: -3px;
-		display: inline-block;
-	}
-	
-	.hand-placeholder {
-		display: inline-block;
-		border-radius: 3px;
-		border: 1px solid cyan;
-		width: 26px;
-		height: 37px;
-		margin: 0;
-		padding: 0;
-		margin-left: -5px; /* it gets bigger after move */
-	}
-</STYLE>
 
 </head>
 <body>
-<div class="hwrap">
-<ul class="hand">
-<li class="card"><span class="cwrap">🃙</span></li>
-<li class="card"><span class="cwrap">🃚</span></li>
-<li class="card"><span class="cwrap">🃛</span></li>
-<li class="card"><span class="cwrap">🃝</span></li>
-<li class="card"><span class="cwrap">🃞</span></li>
-</ul>
-</div>
+    <div id="game-div">
+     <div id="other-players"></div>
+     <div id="tabletop">
+         <div id="table-contents">
+         <div id="tt-pile"></div>
+        <div id="tt-deck"></div>
+         </div>
+     </div>
+     <div class="hwrap">
+      <ul class="hand">
+       <li class="card dense"><span class="cwrap">🃙</span></li>
+       <li class="card dense"><span class="cwrap">🃚</span></li>
+       <li class="card dense"><span class="cwrap">🃛</span></li>
+       <li class="card dense"><span class="cwrap">🃝</span></li>
+       <li class="card dense"><span class="cwrap">🃞</span></li>
+      </ul>
+     </div>
+    </div>
 </body>
 </html>

@@ -47,6 +47,8 @@ type CodesTranslations struct {
 	PlayerStates   map[string]string
 	GameCommands   map[string]string
 	PlayerCommands map[string]string
+	Suits          map[string]string
+	Ranks          map[string]string
 }
 
 func stringifyMap(m map[int]string) map[string]string {
@@ -65,12 +67,25 @@ func GetCodesTranslation() CodesTranslations {
 			m[c.String()] = c.UString()
 		}
 	}
+
+	suits := make(map[string]string)
+	for _, s := range playingcards.SUITS {
+		suits[fmt.Sprint(int(s))] = s.String()
+	}
+
+	ranks := make(map[string]string)
+	for _, r := range playingcards.RANKS {
+		ranks[fmt.Sprint(int(r))] = r.String()
+	}
+
 	return CodesTranslations{
 		m,
 		stringifyMap(game313.GAME_STATES),
 		stringifyMap(game313.PLAYER_STATES),
 		stringifyMap(game313.GAME_COMMANDS),
 		stringifyMap(game313.PLAYER_COMMANDS),
+		suits,
+		ranks,
 	}
 }
 

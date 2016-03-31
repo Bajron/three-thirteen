@@ -1,0 +1,71 @@
+
+div.hwrap {
+    background-color: pink;
+    display: inline-block;
+    padding: 0;
+    margin: auto;
+}
+ul.hand {
+    list-style-type: none;
+    border: 1px solid red;
+    padding: 5px 30px 15px 30px;
+    margin: 0;
+}
+.hand li {
+    display: inline-block;
+    padding: 0;
+}
+
+ul.hand li.card {
+    margin-top: 14px;
+}
+.dense {
+    margin-left: -5px; /* it gets bigger after move */
+}
+
+.hand-placeholder {
+    display: inline-block;
+    border-radius: 3px;
+    border: 1px solid cyan;
+    width: 26px;
+    height: 37px;
+    margin: 0;
+    padding: 0;
+    margin-left: -5px; /* it gets bigger after move */
+}
+
+.card {
+    background-color: white;
+    border-radius: 3px;
+    display: inline-block;
+}
+.cwrap {
+    border: 0; padding: 0;
+    font-size: 30px;
+    width: 28px;
+    margin-left: -3px;
+    display: inline-block;
+}
+
+#tabletop {
+    background-color: green;
+    width: 80px;
+    height: 60px;
+    padding: 20px 10px;
+    border: 2px solid white;
+    border-radius: 10px;
+    margin: auto;
+    text-align: center;
+}
+
+#table-contents {
+    display: inline-block;
+    margin: auto;
+    vertical-align: middle;
+}
+
+#tt-deck,#tt-pile {
+    display: inline-block;
+    margin: 5px;
+}
+
