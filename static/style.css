@@ -1,22 +1,27 @@
 
 div.hwrap {
-    background-color: pink;
     display: inline-block;
     padding: 0;
     margin: auto;
 }
+
+ul.fan {
+	list-style-type: none;
+}
+ul.fan li {
+	margin-left: -13px;
+}
 ul.hand {
-    list-style-type: none;
-    border: 1px solid red;
-    padding: 5px 30px 15px 30px;
+	list-style-type: none;
+    padding: 5px 10px 5px 15px;
     margin: 0;
 }
-.hand li {
+.hand li, .fan li {
     display: inline-block;
     padding: 0;
 }
 
-ul.hand li.card {
+ul.hand .card {
     margin-top: 14px;
 }
 .dense {
@@ -67,5 +72,37 @@ ul.hand li.card {
 #tt-deck,#tt-pile {
     display: inline-block;
     margin: 5px;
+}
+
+#other-players {
+	display: inline-block;
+	margin: auto;
+	padding: 5px;
+}
+
+div.player-box {
+	border: 1px solid black;
+	display: inline-block;
+	padding: 3px;
+	margin: 1em 2px 2px 2px;
+	position: relative;
+	text-align: center;
+}
+.player-box .fan {
+	display: inline-block;
+	margin: auto;
+}
+span.player-name {
+	display: inline-block;
+	background-color: white;
+	color: black;
+	position: absolute;
+	top: -0.7em;
+	padding: 0.2em;
+	border: 1px solid black;
+}
+
+div.active-player {
+	border-color: red;
 }
 

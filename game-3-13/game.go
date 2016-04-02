@@ -179,3 +179,7 @@ func (gs *GameSession) Marshal(cmd GameCommand) error {
 func (gs *GameSession) GetTableState() *PublicStateView {
 	return GetPublicStateView(gs.state)
 }
+
+func (gs *GameSession) GetPlayersHand(i int) playingcards.Group {
+	return gs.state.Players[i].Hand
+}

@@ -16,13 +16,20 @@ type SessionList struct {
 	List []string
 }
 
-func jsonOrError(w http.ResponseWriter, x interface{}) {
-	b, err := json.Marshal(x)
-	if err == nil {
-		w.Write(b)
-	} else {
-		fmt.Fprintf(w, "JSON encoding returned error: %v\n", err)
+func jsonOrError(w http.ResponseWriter, m *Message) {
+	b, err := json.Marshal(m)
+	if err != nil {
+		b, err = json.Marshal(NewErrorMessage(
+			fmt.Sprintf("JSON encoding returned error: %v\n", err),
+			m.Type,
+			m.Token,
+		))
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
 	}
+	w.Write(b)
 }
 
 type GameServer struct {
@@ -49,6 +56,51 @@ type CodesTranslations struct {
 	PlayerCommands map[string]string
 	Suits          map[string]string
 	Ranks          map[string]string
+}
+
+type SessionState struct {
+	Game    *game313.PublicStateView
+	Players []string
+}
+
+type Message struct {
+	Status int
+	Info   string
+	Type   string
+	Token  string
+	Data   interface{}
+}
+
+const (
+	STATUS_OK = iota
+	GENERAL_ERROR
+)
+
+func NewErrorMessage(message string, inReply string, token string) *Message {
+	return &Message{
+		GENERAL_ERROR,
+		message,
+		inReply,
+		token,
+		nil,
+	}
+}
+
+func NewOkMessage(d interface{}, inReply string, token string) *Message {
+	return &Message{
+		STATUS_OK,
+		"OK",
+		inReply,
+		token,
+		d,
+	}
+}
+
+func (s *ServerSession) GetState() *SessionState {
+	return &SessionState{
+		s.Session.GetTableState(),
+		s.Players,
+	}
 }
 
 func stringifyMap(m map[int]string) map[string]string {
@@ -130,8 +182,8 @@ func main() {
 				name, game313.NewGameSession(len(players)), players,
 			}
 
-			pdata := gameServer.Sessions[name].Session.GetTableState()
-			jsonOrError(w, pdata)
+			pdata := gameServer.Sessions[name].GetState()
+			jsonOrError(w, NewOkMessage(pdata, "create", ""))
 		} else if _, ok := q["list"]; ok {
 			l := &SessionList{make([]string, len(gameServer.Sessions))}
 			i := 0
@@ -139,9 +191,9 @@ func main() {
 				l.List[i] = k
 				i++
 			}
-			jsonOrError(w, l)
+			jsonOrError(w, NewOkMessage(l, "list", ""))
 		} else if _, ok := q["translations"]; ok {
-			jsonOrError(w, GetCodesTranslation())
+			jsonOrError(w, NewOkMessage(GetCodesTranslation(), "translations", ""))
 		} else {
 			fmt.Fprintln(w, "<html><body><ul>")
 			for k := range gameServer.Sessions {
@@ -159,8 +211,8 @@ func main() {
 			fmt.Fprintf(w, "Game session does not exit\n")
 			return
 		}
-		pdata := s.Session.GetTableState()
-		jsonOrError(w, pdata)
+		pdata := s.GetState()
+		jsonOrError(w, NewOkMessage(pdata, "session info", ""))
 	})
 
 	ttRouter.HandleFunc("/{session}/{player}/", func(w http.ResponseWriter, r *http.Request) {
@@ -197,10 +249,12 @@ func main() {
 				return
 			}
 			s.Session.Marshal(game313.NewGameCommand(m))
+		} else if _, ok := q["hand"]; ok {
+			jsonOrError(w, NewOkMessage(s.Session.GetPlayersHand(playerIndex), "hand", ""))
+		} else {
+			pdata := s.GetState()
+			jsonOrError(w, NewOkMessage(pdata, "FIXME", ""))
 		}
-
-		pdata := s.Session.GetTableState()
-		jsonOrError(w, pdata)
 	})
 
 	server := &http.Server{
