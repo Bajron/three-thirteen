@@ -106,3 +106,14 @@ div.active-player {
 	border-color: red;
 }
 
+#my-player.drop-possible {
+    border: 1px solid cyan;
+}
+
+#my-player {
+    display: inline-block;
+    padding: 10px;
+    border: 1px solid white;
+    background-color: white;
+}
+

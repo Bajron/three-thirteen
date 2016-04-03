@@ -251,6 +251,21 @@ func main() {
 			s.Session.Marshal(game313.NewGameCommand(m))
 		} else if _, ok := q["hand"]; ok {
 			jsonOrError(w, NewOkMessage(s.Session.GetPlayersHand(playerIndex), "hand", ""))
+		} else if values, ok := q["move"]; ok && len(values) > 0 && len(values[0]) > 0 {
+			m, err := strconv.Atoi(values[0])
+			if err != nil {
+				msg := fmt.Sprintf("Error: %v", err)
+				jsonOrError(w, NewErrorMessage(msg, "move", ""))
+				return
+			}
+			var c playingcards.Card
+			c, err = s.Session.Dispatch(game313.NewTakeCommand(playerIndex, m))
+			if err != nil {
+				msg := fmt.Sprintf("Error: %v", err)
+				jsonOrError(w, NewErrorMessage(msg, "move", ""))
+				return
+			}
+			jsonOrError(w, NewOkMessage(c, "move", ""))
 		} else {
 			pdata := s.GetState()
 			jsonOrError(w, NewOkMessage(pdata, "FIXME", ""))

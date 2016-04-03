@@ -18,23 +18,109 @@ function initialSequence() {
             $('#tt-pile').html(cardToHtml(d.Game.PileTop));
             $('#tt-deck').html(cardBackHtml());
             console.log('got game status');
-			extendSessionData(d);
+            extendSessionData(d);
+            getPlayerDataFromQuery();
 			setUpPlayers(d);
-			updatePlayers(d.Game);
-
-			if (myPlayer == -1) {
-				return;
+			if (myPlayer != -1) {
+                updateMyHand();
 			}
-			updateMyHand();
+            updatePlayers(d.Game);
+            if (myPlayer == d.Game.CurrentPlayer) {
+                setUpMyMoves(d.Game);
+            }
         });
     });
 }
 
-
-
 function setTranslations(data) {
+    var assimilate;
     console.log('setting translations');
     ct = data.Data;
+
+    ct.Consts = {};
+    assimilate = function(a) {
+        var k;
+        for (k in a) {
+            ct.Consts[a[k]] = parseInt(k);
+        }
+    };
+    (function() {
+        var toAssimilate = ['GameStates', 'PlayerStates', 'GameCommands', 'PlayerCommands'];
+        var k;
+        for (k in toAssimilate) {
+            assimilate(ct[toAssimilate[k]]);
+        }
+    })();
+    console.log(ct.Consts);
+}
+
+function CV(k) { return ct.Consts[k]; }
+
+function getPlayerDataFromQuery() {
+    var qm,u,v,e,p;
+    u = window.location.href;
+    qm = u.indexOf('?');
+    v = u.slice(qm+1).split('&');
+    for (e in v) {
+        p = v[e].split('=');
+        if (p[0] == 'name') {
+            console.log('setting name: ' + p[1]);
+            myName = p[1]
+        }
+    }
+}
+
+function setUpMyMoves(game) {
+    var p;
+    p = game.Players[myPlayer];
+    if (p.State === CV('TAKE')) {
+        console.log('pile and deck draggable');
+        $('#tt-pile .card,#tt-deck .card').draggable({
+            revert: true,
+            stack: '.card',
+            connectoToSortable: '#my-player .hand',
+            start: function() {
+                $('#my-player').addClass('drop-possible');
+            },
+            stop: function() {
+                $('#my-player').removeClass('drop-possible');
+            },
+        });
+        $('#my-player').droppable({
+            accept: '.card',
+            drop: function (event, ui) {
+                var d = ui.draggable,w,m,confirm;
+                if (d.parent().attr('id') === 'tt-pile') {
+                    m = 'TAKE_FROM_PILE';
+                } else {
+                    m = 'TAKE_FROM_DECK';
+                }
+                d.draggable('destroy');
+                d.removeAttr('style');
+                d.detach();
+                w = $('<li class="dense"/>');
+                w.append(d);
+                w.appendTo('#my-player .hand');
+                console.log('about to notify server about the move');
+                confirm = $('#my-player .hand li').last();
+                $.ajax({
+                    url: '/3-13/test/' + myName + '/?move=' + CV(m),
+                    dataType: 'json',
+                }).done(function(data, status) {
+                    if (data.Status !== 0) {
+                        alert(data.Info);
+                        return;
+                    }
+                    confirm.html(cardToHtml(data.Data));
+                });
+            }
+        });
+    } else if (p.State == CV('THROW')) {
+        // allow pile to accept draggable
+    } else if (p.State == CV('DONE')) {
+        // enable done button
+        // enable setup groups button
+    }
 }
 
 function playerHtml(name) {
@@ -61,7 +147,7 @@ function extendSessionData(d) {
 
 function setUpPlayers(d) {
 	var i,t;
-	t = makeMeLast(d.Players[0], d);
+	t = makeMeLast(myName, d);
 	if (t.Me != -1) {
 		t.Names.pop();
 		t.Players.pop();
@@ -114,7 +200,7 @@ function updatePlayers(game) {
 	$('.active-player').removeClass('active-player');
 	$(pId(game.CurrentPlayer)).addClass('active-player');
 
-	for (i=0; i<game.Players.length; ++i) {
+    for (i=0; i<game.Players.length; ++i) {
 		updateCardsInHand(game.Players[i]);
 	}
 }
