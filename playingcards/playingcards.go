@@ -12,15 +12,21 @@ import (
 var SUITS []Suit = nil
 var RANKS []Rank = nil
 var NIL_CARD = Card{-1, -1}
+var aToSuit map[string]Suit = nil
+var aToRank map[string]Rank = nil
 
 func init() {
+	aToSuit = make(map[string]Suit)
 	SUITS = make([]Suit, SUIT_COUNT)
 	for i := uint(0); (1 << i) != SUIT_GUARD; i++ {
 		SUITS[i] = Suit(1 << i)
+		aToSuit[fmt.Sprint(SUITS[i])] = SUITS[i]
 	}
+	aToRank = make(map[string]Rank)
 	RANKS = make([]Rank, RANK_COUNT)
 	for i := 0; i < int(RANK_COUNT); i++ {
 		RANKS[i] = Rank(i)
+		aToRank[fmt.Sprint(RANKS[i])] = RANKS[i]
 	}
 }
 
@@ -31,6 +37,27 @@ type Card struct {
 
 func (c Card) String() string {
 	return fmt.Sprintf("%s%s", c.Rank, c.Suit)
+}
+
+func NewFromString(s string) Card {
+	if len(s) < 2 {
+		return NIL_CARD
+	}
+	last := len(s) - 1
+	aSuit := string(s[last])
+	suit, ok := aToSuit[aSuit]
+	if !ok {
+		suit = -1
+	}
+	aRank := string(s[0:last])
+	rank, ok := aToRank[aRank]
+	if !ok {
+		rank = -1
+	}
+	if rank < 0 || suit < 0 {
+		return NIL_CARD
+	}
+	return Card{rank, suit}
 }
 
 // UString returns unicode rune for a card
