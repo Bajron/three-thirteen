@@ -258,14 +258,35 @@ func main() {
 				jsonOrError(w, NewErrorMessage(msg, "move", ""))
 				return
 			}
-			var c playingcards.Card
-			c, err = s.Session.Dispatch(game313.NewTakeCommand(playerIndex, m))
-			if err != nil {
-				msg := fmt.Sprintf("Error: %v", err)
-				jsonOrError(w, NewErrorMessage(msg, "move", ""))
-				return
+			switch m {
+			case game313.TAKE_FROM_DECK, game313.TAKE_FROM_PILE:
+				var c playingcards.Card
+				c, err = s.Session.Dispatch(game313.NewTakeCommand(playerIndex, m))
+				if err != nil {
+					msg := fmt.Sprintf("Error: %v", err)
+					jsonOrError(w, NewErrorMessage(msg, "move", ""))
+					return
+				}
+				jsonOrError(w, NewOkMessage(c, "move", ""))
+			case game313.THROW_CARD:
+				var c playingcards.Card
+				if values, ok = q["card"]; ok && len(values) > 0 && len(values[0]) > 0 {
+					c = playingcards.NewFromString(values[0])
+				}
+
+				if c == playingcards.NIL_CARD {
+					jsonOrError(w, NewErrorMessage("invalid card parameter", "move", ""))
+					return
+				}
+
+				_, err = s.Session.Dispatch(game313.NewThrowCommand(playerIndex, c))
+				if err != nil {
+					msg := fmt.Sprintf("Error: %v", err)
+					jsonOrError(w, NewErrorMessage(msg, "move", ""))
+					return
+				}
+				jsonOrError(w, NewOkMessage(nil, "move", ""))
 			}
-			jsonOrError(w, NewOkMessage(c, "move", ""))
 		} else {
 			pdata := s.GetState()
 			jsonOrError(w, NewOkMessage(pdata, "FIXME", ""))

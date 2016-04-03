@@ -55,8 +55,8 @@ ul.hand .card {
 #tabletop {
     background-color: green;
     width: 80px;
-    height: 60px;
-    padding: 20px 10px;
+    height: 80px;
+    padding: 10px;
     border: 2px solid white;
     border-radius: 10px;
     margin: auto;
@@ -64,14 +64,21 @@ ul.hand .card {
 }
 
 #table-contents {
-    display: inline-block;
-    margin: auto;
+    display: block;
+    height: 60px;
+    margin-top: 20px;
     vertical-align: middle;
 }
 
 #tt-deck,#tt-pile {
     display: inline-block;
-    margin: 5px;
+    width: 30px;
+    height: 36px;
+    padding: 2px;
+    border: 1px solid green;
+    border-radius: 3px;
+    vertical-align: middle;
+    margin: auto;
 }
 
 #other-players {
@@ -106,7 +113,7 @@ div.active-player {
 	border-color: red;
 }
 
-#my-player.drop-possible {
+#my-player.drop-possible, #tt-deck.drop-possible, #tt-pile.drop-possible {
     border: 1px solid cyan;
 }
 
@@ -115,5 +122,13 @@ div.active-player {
     padding: 10px;
     border: 1px solid white;
     background-color: white;
+}
+
+#my-player .prompt {
+    height: 2em;
+    vertical-align: middle;
+    padding: 2px;
+    border: 1px solid black;
+    margin: 2px
 }
 

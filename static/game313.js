@@ -22,14 +22,19 @@ function initialSequence() {
             getPlayerDataFromQuery();
 			setUpPlayers(d);
 			if (myPlayer != -1) {
-                updateMyHand();
-			}
-            updatePlayers(d.Game);
-            if (myPlayer == d.Game.CurrentPlayer) {
-                setUpMyMoves(d.Game);
+                updateMyHand().done(function() { continueAfterSetUp(d); });
+			} else {
+                continueAfterSetUp(d);
             }
         });
     });
+}
+
+function continueAfterSetUp(d) {
+    updatePlayers(d.Game);
+    if (myPlayer === d.Game.CurrentPlayer) {
+        setUpMyMoves(d.Game);
+    }
 }
 
 function setTranslations(data) {
@@ -70,11 +75,17 @@ function getPlayerDataFromQuery() {
     }
 }
 
+function setPrompt(txt) {
+    console.log(txt);
+    $('#my-player .prompt').text(txt);
+}
+
 function setUpMyMoves(game) {
     var p;
     p = game.Players[myPlayer];
+    console.log('setting up moves ' + p.State);
     if (p.State === CV('TAKE')) {
-        console.log('pile and deck draggable');
+        setPrompt('Take a card');
         $('#tt-pile .card,#tt-deck .card').draggable({
             revert: true,
             stack: '.card',
@@ -109,17 +120,49 @@ function setUpMyMoves(game) {
                 }).done(function(data, status) {
                     if (data.Status !== 0) {
                         alert(data.Info);
-                        return;
+                        return; // TODO reload?
                     }
                     confirm.html(cardToHtml(data.Data));
+                    $('#tt-pile .card,#tt-deck .card').draggable('destroy');
                 });
             }
         });
-    } else if (p.State == CV('THROW')) {
+    } else if (p.State === CV('THROW')) {
+        setPrompt('Throw a card back on pile');
         // allow pile to accept draggable
+        $('.hand').sortable('option', {
+            'start': function() {
+                $('#tt-pile').addClass('drop-possible');
+            },
+            'stop': function() {
+                $('#tt-pile').removeClass('drop-possible');
+            },
+        });
+
+        $('#tt-pile').droppable({
+            drop: function (event, ui) {
+                var d = ui.draggable;
+                var c = d.data('card');
+                $('#tt-pile .card').html(d.find('.card'));
+                d.remove();
+                $.ajax({
+                    'url': '/3-13/test/'+ myName+'/?move=' + CV('THROW') + '&card=' + cardToAscii(c),
+                    'dataType': 'json',
+                }).done(function(data, status) {
+                    if (data.Status !== 0) {
+                        alert(data.Info);
+                        return; // TODO reload?
+                    }
+                    // TODO some event queue to reload and continue?
+                });
+            },
+        });
     } else if (p.State == CV('DONE')) {
+        setPrompt('Set up groups or pass the turn');
         // enable done button
         // enable setup groups button
+    } else {
+        setPrompt(p.State);
     }
 }
 
@@ -201,6 +244,7 @@ function updatePlayers(game) {
 	$(pId(game.CurrentPlayer)).addClass('active-player');
 
     for (i=0; i<game.Players.length; ++i) {
+        if (myPlayer == i) continue;
 		updateCardsInHand(game.Players[i]);
 	}
 }
@@ -209,7 +253,7 @@ function updateCardsInHand(player) {
 	var c,p,l;
 	c = player.CardsInHand;
 	p = $(pId(player.Index));
-	l = p.find('ul li').length;
+	l = p.find('ul.fan li').length;
 	while (l > c) {
 		p.find('ul li').last().remove();
 		--l;
@@ -221,17 +265,18 @@ function updateCardsInHand(player) {
 }
 
 function addMyPlayer(hand) {
-	var target, h, f, i;
+	var h, f, i;
 
-	target = $('#my-player');
-
-	h = $(playerHtml(myName));
+    $('#my-player').append(
+            playerHtml(myName),
+            '<div class="prompt"></div>');
+	h = $('#my-player .player-box');
 	h.attr('id', 'player-' + myPlayer);
 
 	f = h.find('ul.fan');
 	f.removeClass('fan');
 	f.addClass('hand');
-	f.wrap('<div class="hwrap"/>');
+    f.wrap('<div class="hwrap"/>');
 	f.sortable({
     	placeholder: 'hand-placeholder',
         revert: 250,
@@ -240,12 +285,12 @@ function addMyPlayer(hand) {
     
 	for (i=0; i<hand.length;++i) {
 		f.append('<li class="dense">'+ cardToHtml(hand[i]) +'</li>');
+        f.find('li').last().data('card', hand[i]);
 	}
-	target.append(h);
 }
 
 function updateMyHand() {
-	$.ajax({
+	return $.ajax({
 		url: '/3-13/test/'+myName+'/?hand',
 		dataType: 'json',
 	}).done(function(data, status) {
