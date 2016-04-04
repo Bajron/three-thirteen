@@ -2,6 +2,7 @@
 /* global myPlayer */
 /* global myName */
 /* global ct */
+/* global cmdQ */
 
 function initialSequence() {
     $.ajax({
@@ -15,14 +16,11 @@ function initialSequence() {
         }).done(function(data, status) {
             var d;
 			d = data.Data;
-            $('#tt-pile').html(cardToHtml(d.Game.PileTop));
-            $('#tt-deck').html(cardBackHtml());
-            console.log('got game status');
-            extendSessionData(d);
-            getPlayerDataFromQuery();
+			getPlayerDataFromQuery();
+			extendSessionData(d);
 			setUpPlayers(d);
 			if (myPlayer != -1) {
-                updateMyHand().done(function() { continueAfterSetUp(d); });
+                addMyHand().done(function() { continueAfterSetUp(d); });
 			} else {
                 continueAfterSetUp(d);
             }
@@ -31,10 +29,36 @@ function initialSequence() {
 }
 
 function continueAfterSetUp(d) {
-    updatePlayers(d.Game);
+	$('#tt-pile').html(cardToHtml(d.Game.PileTop));
+	$('#tt-pile .card').data('card', d.Game.PileTop);
+
+	$('#tt-deck').html(cardBackHtml());
+
+	updatePlayers(d.Game);
     if (myPlayer === d.Game.CurrentPlayer) {
         setUpMyMoves(d.Game);
     }
+    consumeCommands();
+}
+
+function consumeCommands() {
+    var cmd;
+    while (cmdQ.length > 0) {
+        cmd = cmdQ.shift();
+        cmd();
+    }
+    setTimeout(consumeCommands, 1000);
+}
+
+function synchronizeTableStatus() {
+    $.ajax({
+        'url': '/3-13/test/',
+        'dataType': 'json',
+    }).done(function(data, status) {
+        var d = data.Data;
+        extendSessionData(d);
+        continueAfterSetUp(d);
+    });
 }
 
 function setTranslations(data) {
@@ -84,7 +108,29 @@ function setUpMyMoves(game) {
     var p;
     p = game.Players[myPlayer];
     console.log('setting up moves ' + p.State);
-    if (p.State === CV('TAKE')) {
+    if (game.CurrentState === CV('NOT_DEALT') && myPlayer === game.StartingPlayer) {
+		setPrompt('You are the dealer');
+		(function(){
+            var a = $('#my-player .actions');
+            a.show();
+            a.find('.done,.pass').attr('disabled', 'disabled');
+            a.find('.deal')
+			.removeAttr('disabled')
+            .click(function(ev) {
+                $.ajax({
+                    'url': '/3-13/test/' + myName +'/?marshal=' + CV('DEAL'),
+                    'dataType': 'json',
+                }).done(function(data, status) {
+                    if (data.Status !== 0) {
+                        alert(data.Info);
+                        return; // TODO reload?
+                    }
+                    cmdQ.push(synchronizeTableStatus);
+                });
+                ev.preventDefault();
+            });
+        })();
+	} else if (p.State === CV('TAKE')) {
         setPrompt('Take a card');
         $('#tt-pile .card,#tt-deck .card').draggable({
             revert: true,
@@ -123,7 +169,9 @@ function setUpMyMoves(game) {
                         return; // TODO reload?
                     }
                     confirm.html(cardToHtml(data.Data));
+					confirm.find('.card').data('card', data.Data);
                     $('#tt-pile .card,#tt-deck .card').draggable('destroy');
+                    cmdQ.push(synchronizeTableStatus);
                 });
             }
         });
@@ -153,14 +201,33 @@ function setUpMyMoves(game) {
                         alert(data.Info);
                         return; // TODO reload?
                     }
-                    // TODO some event queue to reload and continue?
+                    cmdQ.push(synchronizeTableStatus);
                 });
             },
         });
     } else if (p.State == CV('DONE')) {
         setPrompt('Set up groups or pass the turn');
-        // enable done button
-        // enable setup groups button
+        
+        (function(){
+            var a = $('#my-player .actions');
+            a.show();
+            a.find('.done')
+			.removeAttr('disabled')
+			.click(function(ev) {
+                $.ajax({
+                    'url': '/3-13/test/' + myName +'/?move=' + CV('PASS_TURN'),
+                    'dataType': 'json',
+                }).done(function(data, status) {
+                    if (data.Status !== 0) {
+                        alert(data.Info);
+                        return; // TODO reload?
+                    }
+                    cmdQ.push(synchronizeTableStatus);
+                });
+                ev.preventDefault();
+				a.find('.done').attr('disabled', 'disabled');
+            });
+        })();
     } else {
         setPrompt(p.State);
     }
@@ -247,6 +314,10 @@ function updatePlayers(game) {
         if (myPlayer == i) continue;
 		updateCardsInHand(game.Players[i]);
 	}
+
+	//if ($('#my-player .hand li').length != game.Players[myPlayer].CardsInHand) {
+		updateMyHand();
+	//}
 }
 
 function updateCardsInHand(player) {
@@ -265,13 +336,22 @@ function updateCardsInHand(player) {
 }
 
 function addMyPlayer(hand) {
-	var h, f, i;
+	var h, f, a, i;
 
     $('#my-player').append(
             playerHtml(myName),
-            '<div class="prompt"></div>');
+            '<div class="actions"></div>',
+            '<div class="prompt"></div>'
+    );
 	h = $('#my-player .player-box');
 	h.attr('id', 'player-' + myPlayer);
+
+    a = $('#my-player .actions');
+    a.hide();
+    a.append('<input class="deal" type="button" value="Deal"/>');
+    a.append('<input class="groups" type="button" value="Groups"/>');
+    a.append('<input class="done" type="button" value="Done"/>');
+    a.find('input').attr('disabled','disabled');
 
 	f = h.find('ul.fan');
 	f.removeClass('fan');
@@ -282,14 +362,17 @@ function addMyPlayer(hand) {
         revert: 250,
     });
     f.disableSelection();
-    
+ 
+	if (hand === null) {
+		return;
+	}
 	for (i=0; i<hand.length;++i) {
 		f.append('<li class="dense">'+ cardToHtml(hand[i]) +'</li>');
         f.find('li').last().data('card', hand[i]);
 	}
 }
 
-function updateMyHand() {
+function addMyHand() {
 	return $.ajax({
 		url: '/3-13/test/'+myName+'/?hand',
 		dataType: 'json',
@@ -298,4 +381,37 @@ function updateMyHand() {
 	});
 }
 
+function updateMyHand() {
+	return $.ajax({
+		url: '/3-13/test/'+myName+'/?hand',
+		dataType: 'json',
+	}).done(function(data, status) {
+		var hand = data.Data, i, f;
+
+		f = $('#my-player .hand');
+		f.find('li').each(function(idx, el) {
+			var i, hit;
+			el = $(el);
+			hit = false;
+			for (i=0; i < hand.length; ++i) {
+				console.log(el.data('card'), hand[i]);
+				// TODO fix compare
+				if (el.data('card') == hand[i]) {
+					hand.splice(i, 1);
+					hit = true;
+					break;
+				}
+			}
+			if (!hit) {
+				console.log('not hit ' + cardToAscii(el.data('card')));
+				el.remove();
+			}
+		});
+
+		for (i in hand) {
+			f.append('<li class="dense">'+ cardToHtml(hand[i]) +'</li>');
+			f.find('li').last().data('card', hand[i]);
+		}
+	});
+}
 

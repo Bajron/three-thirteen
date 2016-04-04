@@ -116,6 +116,12 @@ func NewThrowCommand(p int, c playingcards.Card) MoveCommand {
 	}
 }
 
+func NewPassCommand(p int) MoveCommand {
+	return MoveCommand{
+		p, PASS_TURN, playingcards.NIL_CARD, FinalGroups{nil, nil},
+	}
+}
+
 type Scores []int
 
 type GameSession struct {

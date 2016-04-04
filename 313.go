@@ -238,17 +238,30 @@ func main() {
 			fmt.Fprintf(w, "?marshal=[%d:deal|%d:nextround|%d:nextgame|]\n",
 				game313.DEAL, game313.NEXT_TRUMPH, game313.NEXT_GAME)
 		} else if values, ok := q["marshal"]; ok && len(values) > 0 && len(values[0]) > 0 {
-			if playerIndex != 0 {
-				fmt.Fprintf(w, "Error: only player 0 can marshal the game")
-				return
-			}
-
 			m, err := strconv.Atoi(values[0])
 			if err != nil {
 				fmt.Fprintf(w, "Error: %v", err)
 				return
 			}
+
+			startingPlayer := s.Session.GetTableState().StartingPlayer
+
+			// TODO this logic can go to game313?
+			if !(m == game313.DEAL && startingPlayer == playerIndex) {
+				msg := fmt.Sprintf("Error: only current player (%d) can deal", startingPlayer)
+				jsonOrError(w, NewErrorMessage(msg, "marshal", ""))
+				return
+			}
+
+			if m != game313.DEAL && playerIndex != 0 {
+				// TODO refactor all this copy-paste
+				msg := fmt.Sprintf("Error: only player 0 can marshal the game")
+				jsonOrError(w, NewErrorMessage(msg, "marshal", ""))
+				return
+			}
+
 			s.Session.Marshal(game313.NewGameCommand(m))
+			jsonOrError(w, NewOkMessage(nil, "marshal", ""))
 		} else if _, ok := q["hand"]; ok {
 			jsonOrError(w, NewOkMessage(s.Session.GetPlayersHand(playerIndex), "hand", ""))
 		} else if values, ok := q["move"]; ok && len(values) > 0 && len(values[0]) > 0 {
@@ -286,7 +299,16 @@ func main() {
 					return
 				}
 				jsonOrError(w, NewOkMessage(nil, "move", ""))
+			case game313.PASS_TURN:
+				_, err = s.Session.Dispatch(game313.NewPassCommand(playerIndex))
+				if err != nil {
+					msg := fmt.Sprintf("Error: %v", err)
+					jsonOrError(w, NewErrorMessage(msg, "move", ""))
+					return
+				}
+				jsonOrError(w, NewOkMessage(nil, "move", ""))
 			}
+
 		} else {
 			pdata := s.GetState()
 			jsonOrError(w, NewOkMessage(pdata, "FIXME", ""))
