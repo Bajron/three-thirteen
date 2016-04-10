@@ -20,13 +20,18 @@ func TestPublicState(t *testing.T) {
 }
 
 func TestGame(t *testing.T) {
-	session := NewGameSession(3)
+	session := NewGameSession(3, 0)
 
 	if len(session.state.Players) != 3 {
 		t.Error("session should have initialized state")
 	}
 
-	mErr := session.Marshal(GameCommand{DEAL})
+	mErr := session.Marshal(GameCommand{session.state.StartingPlayer, DEAL})
+	if mErr == nil {
+		t.Error("deal should fail for wrong player")
+	}
+
+	mErr = session.Marshal(GameCommand{session.state.DealingPlayer(), DEAL})
 	if mErr != nil {
 		t.Error("deal should not fail")
 	}

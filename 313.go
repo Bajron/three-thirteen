@@ -179,7 +179,7 @@ func main() {
 			players := strings.Split(pV[0], ",")
 
 			gameServer.Sessions[name] = &ServerSession{
-				name, game313.NewGameSession(len(players)), players,
+				name, game313.NewGameSession(len(players), 0), players,
 			}
 
 			pdata := gameServer.Sessions[name].GetState()
@@ -244,23 +244,7 @@ func main() {
 				return
 			}
 
-			startingPlayer := s.Session.GetTableState().StartingPlayer
-
-			// TODO this logic can go to game313?
-			if !(m == game313.DEAL && startingPlayer == playerIndex) {
-				msg := fmt.Sprintf("Error: only current player (%d) can deal", startingPlayer)
-				jsonOrError(w, NewErrorMessage(msg, "marshal", ""))
-				return
-			}
-
-			if m != game313.DEAL && playerIndex != 0 {
-				// TODO refactor all this copy-paste
-				msg := fmt.Sprintf("Error: only player 0 can marshal the game")
-				jsonOrError(w, NewErrorMessage(msg, "marshal", ""))
-				return
-			}
-
-			s.Session.Marshal(game313.NewGameCommand(m))
+			s.Session.Marshal(game313.NewGameCommand(playerIndex, m))
 			jsonOrError(w, NewOkMessage(nil, "marshal", ""))
 		} else if _, ok := q["hand"]; ok {
 			jsonOrError(w, NewOkMessage(s.Session.GetPlayersHand(playerIndex), "hand", ""))

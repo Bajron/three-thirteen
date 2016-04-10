@@ -39,6 +39,7 @@ func init() {
 type PublicStateView struct {
 	Players        []PublicPlayerView
 	StartingPlayer int
+	DealingPlayer  int
 	CurrentPlayer  int
 	CurrentState   int
 	CardsInDeck    int
@@ -70,6 +71,7 @@ func GetPublicStateView(s *State) *PublicStateView {
 	return &PublicStateView{
 		s.GetPublicPlayersView(),
 		s.StartingPlayer,
+		s.DealingPlayer(),
 		s.CurrentPlayer,
 		s.CurrentState,
 		len(s.Deck),
@@ -97,11 +99,12 @@ const (
 
 // Higher level game marshal commands
 type GameCommand struct {
-	Move int
+	Player int
+	Move   int
 }
 
-func NewGameCommand(m int) GameCommand {
-	return GameCommand{m}
+func NewGameCommand(p int, m int) GameCommand {
+	return GameCommand{p, m}
 }
 
 func NewTakeCommand(p int, t int) MoveCommand {
@@ -133,14 +136,17 @@ type GameSession struct {
 	scoresHistory []Scores
 	// All time history of 14 result
 	gamesHistory []Scores
+	// Index of priviliged player
+	admin int
 }
 
-func NewGameSession(players int) *GameSession {
+func NewGameSession(players int, admin int) *GameSession {
 	return &GameSession{
 		New(players),
 		make([]MoveCommand, 0),
 		make([]Scores, 0, 12),
 		make([]Scores, 0),
+		admin,
 	}
 }
 
@@ -170,14 +176,32 @@ func (gs *GameSession) Dispatch(cmd MoveCommand) (playingcards.Card, error) {
 	return c, e
 }
 
+func (s *State) PreviousPlayer(p int) int {
+	l := len(s.Players)
+	return (p - 1 + l) % l
+}
+
+func (s *State) DealingPlayer() int {
+	return s.PreviousPlayer(s.StartingPlayer)
+}
+
 func (gs *GameSession) Marshal(cmd GameCommand) error {
 	switch cmd.Move {
 	case DEAL:
+		if gs.state.DealingPlayer() != cmd.Player {
+			return &gameError{"Only dealer can deal"}
+		}
 		gs.state.Deal()
 		return nil
 	case NEXT_TRUMPH:
+		if gs.admin != cmd.Player {
+			return &gameError{"Only game admin can do this"}
+		}
 		return gs.state.AdvanceRound()
 	case NEXT_GAME:
+		if gs.admin != cmd.Player {
+			return &gameError{"Only game admin can do this"}
+		}
 	}
 	return &gameError{"Marshal: not implemented"}
 }

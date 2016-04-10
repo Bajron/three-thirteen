@@ -29,18 +29,47 @@ function initialSequence() {
 }
 
 function continueAfterSetUp(d) {
-	$('#tt-pile').html(cardToHtml(d.Game.PileTop));
-	$('#tt-pile .card').data('card', d.Game.PileTop);
+    var game = d.Game;
+	$('#tt-pile').html(cardToHtml(game.PileTop));
+	$('#tt-pile .card').data('card', game.PileTop);
 
 	$('#tt-deck').html(cardBackHtml());
 
-	updatePlayers(d.Game);
-    if (myPlayer === d.Game.CurrentPlayer) {
-        setUpMyMoves(d.Game);
+	updatePlayers(game);
+
+    if (game.CurrentState === CV('NOT_DEALT') && myPlayer === game.DealingPlayer) {
+		setUpDealer();
+	} else if (myPlayer === game.CurrentPlayer) {
+        setUpMyMoves(game);
     } else {
         setPrompt('Wait for your turn');
     }
     consumeCommands();
+}
+
+function setUpDealer() {
+    var a;
+
+    setPrompt('You are the dealer');
+
+    a = $('#my-player .actions');
+    a.show();
+    a.find('.done,.pass').attr('disabled', 'disabled');
+    a.find('.deal')
+    .removeAttr('disabled')
+    .click(function(ev) {
+        $.ajax({
+            'url': '/3-13/test/' + myName +'/?marshal=' + CV('DEAL'),
+            'dataType': 'json',
+        }).done(function(data, status) {
+            if (data.Status !== 0) {
+                alert(data.Info);
+                return; // TODO reload?
+            }
+            cmdQ.push(synchronizeTableStatus);
+        });
+        ev.preventDefault();
+    });
 }
 
 function consumeCommands() {
@@ -107,32 +136,8 @@ function setPrompt(txt) {
 }
 
 function setUpMyMoves(game) {
-    var p;
-    p = game.Players[myPlayer];
-    console.log('setting up moves ' + p.State);
-    if (game.CurrentState === CV('NOT_DEALT') && myPlayer === game.StartingPlayer) {
-		setPrompt('You are the dealer');
-		(function(){
-            var a = $('#my-player .actions');
-            a.show();
-            a.find('.done,.pass').attr('disabled', 'disabled');
-            a.find('.deal')
-			.removeAttr('disabled')
-            .click(function(ev) {
-                $.ajax({
-                    'url': '/3-13/test/' + myName +'/?marshal=' + CV('DEAL'),
-                    'dataType': 'json',
-                }).done(function(data, status) {
-                    if (data.Status !== 0) {
-                        alert(data.Info);
-                        return; // TODO reload?
-                    }
-                    cmdQ.push(synchronizeTableStatus);
-                });
-                ev.preventDefault();
-            });
-        })();
-	} else if (p.State === CV('TAKE')) {
+    var p = game.Players[myPlayer];
+    if (p.State === CV('TAKE')) {
         setPrompt('Take a card');
         $('#tt-pile .card,#tt-deck .card').draggable({
             revert: true,
