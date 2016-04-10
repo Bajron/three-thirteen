@@ -37,8 +37,12 @@ function continueAfterSetUp(d) {
 
 	updatePlayers(game);
 
-    if (game.CurrentState === CV('NOT_DEALT') && myPlayer === game.DealingPlayer) {
-		setUpDealer();
+    if (game.CurrentState === CV('NOT_DEALT')) {
+        if (myPlayer === game.DealingPlayer) {
+		    setUpDealer();
+        } else {
+            setPrompt('Wait for the dealer');
+        }
 	} else if (myPlayer === game.CurrentPlayer) {
         setUpMyMoves(game);
     } else {
