@@ -117,7 +117,13 @@ div.active-player {
     border: 1px solid cyan;
 }
 
+#my-player .player-box {
+    width: 100%;
+}
+
 #my-player {
+    width: 300px;
+    text-align: center;
     display: inline-block;
     padding: 10px;
     border: 1px solid white;
@@ -125,10 +131,12 @@ div.active-player {
 }
 
 #my-player .prompt {
-    height: 2em;
     vertical-align: middle;
-    padding: 2px;
+    padding: 5px;
     border: 1px solid black;
-    margin: 2px
+    margin: 2px auto;
+    display: inline-block;
+    width: 100%;
+    font-family: courier;
 }
 
