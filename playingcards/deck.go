@@ -71,6 +71,13 @@ func (pile Pile) Top() Card {
 	return c
 }
 
+func (pile Pile) Peek() Card {
+	if len(pile) < 2 {
+		return NIL_CARD
+	}
+	return pile[len(pile)-2]
+}
+
 func (pile Pile) getLast() (c Card, i int) {
 	if len(pile) <= 0 {
 		return NIL_CARD, -1

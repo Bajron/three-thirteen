@@ -88,6 +88,9 @@ func TestPop(t *testing.T) {
 	kh := Card{KING, HEARTS}
 	as := Card{ACE, SPADES}
 	pile = append(pile, as, kh)
+	if as != pile.Peek() {
+		t.Error("you should get second last with Peek")
+	}
 	if kh != pile.Pop() {
 		t.Error("you should get last appended with Pop")
 	}

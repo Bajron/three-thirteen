@@ -45,6 +45,7 @@ type PublicStateView struct {
 	CardsInDeck    int
 	CardsOnPile    int
 	PileTop        playingcards.Card
+	PilePeek       playingcards.Card
 	FinalGroups    []FinalGroups
 	Trumph         playingcards.Rank
 }
@@ -77,6 +78,7 @@ func GetPublicStateView(s *State) *PublicStateView {
 		len(s.Deck),
 		len(s.Pile),
 		s.Pile.Top(),
+		s.Pile.Peek(),
 		s.FinalGroups,
 		s.Trumph,
 	}
