@@ -37,6 +37,8 @@ function continueAfterSetUp(d) {
 	updatePlayers(d.Game);
     if (myPlayer === d.Game.CurrentPlayer) {
         setUpMyMoves(d.Game);
+    } else {
+        setPrompt('Wait for your turn');
     }
     consumeCommands();
 }
@@ -190,7 +192,7 @@ function setUpMyMoves(game) {
         $('#tt-pile').droppable({
             drop: function (event, ui) {
                 var d = ui.draggable;
-                var c = d.data('card');
+                var c = d.find('.card').data('card');
                 $('#tt-pile .card').html(d.find('.card'));
                 d.remove();
                 $.ajax({
@@ -315,9 +317,7 @@ function updatePlayers(game) {
 		updateCardsInHand(game.Players[i]);
 	}
 
-	//if ($('#my-player .hand li').length != game.Players[myPlayer].CardsInHand) {
-		updateMyHand();
-	//}
+	updateMyHand();
 }
 
 function updateCardsInHand(player) {
@@ -368,7 +368,7 @@ function addMyPlayer(hand) {
 	}
 	for (i=0; i<hand.length;++i) {
 		f.append('<li class="dense">'+ cardToHtml(hand[i]) +'</li>');
-        f.find('li').last().data('card', hand[i]);
+        f.find('li').last().find('.card').data('card', hand[i]);
 	}
 }
 
@@ -390,27 +390,26 @@ function updateMyHand() {
 
 		f = $('#my-player .hand');
 		f.find('li').each(function(idx, el) {
-			var i, hit;
+			var i, hit, c;
 			el = $(el);
+            c = el.find('.card');
 			hit = false;
 			for (i=0; i < hand.length; ++i) {
-				console.log(el.data('card'), hand[i]);
-				// TODO fix compare
-				if (el.data('card') == hand[i]) {
+				if (cardsEqual(c.data('card'), hand[i])) {
 					hand.splice(i, 1);
 					hit = true;
 					break;
 				}
 			}
 			if (!hit) {
-				console.log('not hit ' + cardToAscii(el.data('card')));
+				console.log('not hit ' + cardToAscii(c.data('card')));
 				el.remove();
 			}
 		});
 
 		for (i in hand) {
 			f.append('<li class="dense">'+ cardToHtml(hand[i]) +'</li>');
-			f.find('li').last().data('card', hand[i]);
+			f.find('li').last().find('.card').data('card', hand[i]);
 		}
 	});
 }

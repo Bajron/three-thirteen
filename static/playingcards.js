@@ -7,6 +7,11 @@ function cardHtml(c) {
     return str;
 }
 
+function cardsEqual(a,b) {
+    if (a == b) return true;
+    return a.Rank === b.Rank && a.Suit === b.Suit;
+}
+
 function cardBackHtml() {
 	return cardHtml('🂠');
 }
