@@ -3,6 +3,8 @@ div.hwrap {
     display: inline-block;
     padding: 0;
     margin: auto;
+    height: 60px;
+    min-width: 60px;
 }
 
 ul.fan {
@@ -16,12 +18,12 @@ ul.hand {
     padding: 5px 10px 5px 15px;
     margin: 0;
 }
-.hand li, .fan li {
+.hand li, .fan li, .group li {
     display: inline-block;
     padding: 0;
 }
 
-ul.hand .card {
+ul.hand .card, .group .card {
     margin-top: 14px;
 }
 .dense {
@@ -138,5 +140,60 @@ div.active-player {
     display: inline-block;
     width: 100%;
     font-family: courier;
+}
+
+#my-player .group-setup {
+    width: 100%;
+    border: 1px solid black;
+    padding: 5px;
+    margin: 5px;
+    display: inline-block;
+}
+
+.group-setup > input {
+    margin: 5px 5px 5px auto;
+}
+
+.group-setup .group {
+    margin: 12px 12px 5px 12px;
+    padding: 5px 10px 5px 15px;
+    height: 60px;
+    min-width: 60px;
+    border: 1px solid orange;
+    display: inline-block;
+    position: relative;
+    float: left;
+}
+
+.groups-wrap {
+    width: 100%;
+}
+
+.groups {
+    display: inline-block;
+    margin: auto;
+    width: auto;
+}
+
+.group ul {
+    margin:0;
+    padding:0;
+    height: 60px;
+    list-style-type: none;
+}
+
+.group input.remove-group {
+    padding: 0;
+    margin: 0;
+    border-radius: 10px;
+    border: 1px solid black;
+    width: 20px;
+    height: 20px;
+    font-size: 7px;
+    text-align: center;
+    vertical-align: middle;
+    position: absolute;
+    right: -10px;
+    top: -10px;
 }
 

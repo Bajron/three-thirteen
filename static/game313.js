@@ -222,7 +222,7 @@ function setUpMyMoves(game) {
         (function(){
             var a = $('#my-player .actions');
             a.show();
-            a.find('.done')
+            a.find('.pass')
 			.removeAttr('disabled')
 			.click(function(ev) {
                 $.ajax({
@@ -236,12 +236,46 @@ function setUpMyMoves(game) {
                     cmdQ.push(synchronizeTableStatus);
                 });
                 ev.preventDefault();
-				a.find('.done').attr('disabled', 'disabled');
+				a.find('.pass').attr('disabled', 'disabled');
+            });
+            a.find('.done')
+            .removeAttr('disabled')
+            .click(function(ev) {
+                var gs;
+                gs = $('<div class="group-setup">'+
+                        '<div class="groups-wrap"><div class="groups"/></div>'+
+                        '<input class="add-group" type="button" value="+">'+
+                        '<input class="send-group" type="button" value="Send">'+
+                        '</div>');
+                gs.find('.add-group').click(function(ev) {
+                    addGroup();
+                    ev.preventDefault();
+                });
+                $('#my-player').prepend(gs);
+                addGroup();
             });
         })();
     } else {
         setPrompt(p.State);
     }
+}
+
+function addGroup() {
+    var g;
+    g = $('<div class="group"><input class="remove-group" type="button" value="X"><ul></ul></div>');
+    g.find('ul').sortable({
+        'connectWith': 'ul.hand, .group ul',
+        'placeholder': 'hand-placeholder',
+    });
+    g.find('input.remove-group').click(function(ev) {
+        var me = $(this).parent();
+        me.find('ul li').each(function(idx, el) {
+            $(el).detach().appendTo('ul.hand');
+        });
+        me.remove();
+        ev.preventDefault();
+    });
+    $('.group-setup .groups').append(g);
 }
 
 function playerHtml(name) {
@@ -358,8 +392,8 @@ function addMyPlayer(hand) {
     a = $('#my-player .actions');
     a.hide();
     a.append('<input class="deal" type="button" value="Deal"/>');
-    a.append('<input class="groups" type="button" value="Groups"/>');
-    a.append('<input class="done" type="button" value="Done"/>');
+    a.append('<input class="done" type="button" value="Groups"/>');
+    a.append('<input class="pass" type="button" value="Pass"/>');
     a.find('input').attr('disabled','disabled');
 
 	f = h.find('ul.fan');
@@ -368,6 +402,7 @@ function addMyPlayer(hand) {
     f.wrap('<div class="hwrap"/>');
 	f.sortable({
     	placeholder: 'hand-placeholder',
+        connectWith: '.group ul',
         revert: 250,
     });
     f.disableSelection();
