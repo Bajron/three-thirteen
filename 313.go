@@ -249,10 +249,13 @@ func main() {
 		} else if _, ok := q["hand"]; ok {
 			jsonOrError(w, NewOkMessage(s.Session.GetPlayersHand(playerIndex), "hand", ""))
 		} else if values, ok := q["move"]; ok && len(values) > 0 && len(values[0]) > 0 {
+			sendError := func(e error) {
+				msg := fmt.Sprintf("Error: %v", e)
+				jsonOrError(w, NewErrorMessage(msg, "move", ""))
+			}
 			m, err := strconv.Atoi(values[0])
 			if err != nil {
-				msg := fmt.Sprintf("Error: %v", err)
-				jsonOrError(w, NewErrorMessage(msg, "move", ""))
+				sendError(err)
 				return
 			}
 			switch m {
@@ -260,8 +263,7 @@ func main() {
 				var c playingcards.Card
 				c, err = s.Session.Dispatch(game313.NewTakeCommand(playerIndex, m))
 				if err != nil {
-					msg := fmt.Sprintf("Error: %v", err)
-					jsonOrError(w, NewErrorMessage(msg, "move", ""))
+					sendError(err)
 					return
 				}
 				jsonOrError(w, NewOkMessage(c, "move", ""))
@@ -278,16 +280,39 @@ func main() {
 
 				_, err = s.Session.Dispatch(game313.NewThrowCommand(playerIndex, c))
 				if err != nil {
-					msg := fmt.Sprintf("Error: %v", err)
-					jsonOrError(w, NewErrorMessage(msg, "move", ""))
+					sendError(err)
 					return
 				}
 				jsonOrError(w, NewOkMessage(nil, "move", ""))
 			case game313.PASS_TURN:
 				_, err = s.Session.Dispatch(game313.NewPassCommand(playerIndex))
 				if err != nil {
-					msg := fmt.Sprintf("Error: %v", err)
-					jsonOrError(w, NewErrorMessage(msg, "move", ""))
+					sendError(err)
+					return
+				}
+				jsonOrError(w, NewOkMessage(nil, "move", ""))
+			case game313.DECLARE_DONE:
+				fg := game313.NewFinalGroups()
+				if values, ok = q["groups"]; ok && len(values) > 0 && len(values[0]) > 0 {
+					aGroups := strings.Split(values[0], ";")
+					for _, g := range aGroups {
+						aGroup := strings.Split(g, ",")
+						group := make(playingcards.Group, len(aGroup))
+						for i, aC := range aGroup {
+							group[i] = playingcards.NewFromString(aC)
+						}
+						fg.Set = append(fg.Set, group)
+					}
+				}
+				if values, ok = q["unassigned"]; ok && len(values) > 0 && len(values[0]) > 0 {
+					aGroup := strings.Split(values[0], ",")
+					for _, aC := range aGroup {
+						fg.Unassigned = append(fg.Unassigned, playingcards.NewFromString(aC))
+					}
+				}
+				_, err = s.Session.Dispatch(game313.NewDoneCommand(playerIndex, fg))
+				if err != nil {
+					sendError(err)
 					return
 				}
 				jsonOrError(w, NewOkMessage(nil, "move", ""))

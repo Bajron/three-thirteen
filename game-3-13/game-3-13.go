@@ -45,6 +45,13 @@ type FinalGroups struct {
 	Unassigned playingcards.Group
 }
 
+func NewFinalGroups() FinalGroups {
+	return FinalGroups{
+		make([]playingcards.Group, 0),
+		make(playingcards.Group, 0),
+	}
+}
+
 type PlayerState int
 type Move int
 
@@ -225,7 +232,7 @@ func (s *State) DoneMove(player int, groups FinalGroups) error {
 
 	s.FinalGroups[player] = groups
 	s.Players[player].Hand = s.Players[player].Hand[:0]
-	s.CurrentState = FINISHING
+	s.CurrentState = FINISHING //BUG in advance player
 	s.advancePlayer()
 
 	return nil
@@ -275,7 +282,7 @@ func (s *State) advancePlayer() {
 	}
 	if s.CurrentState == FINISHING &&
 		s.CurrentPlayer == s.StartingPlayer {
-		s.CurrentState = FINISHED
+		s.CurrentState = FINISHED // BUG when StartingPlayer finishes
 	}
 }
 

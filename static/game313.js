@@ -15,17 +15,26 @@ function initialSequence() {
             dataType: 'json',
         }).done(function(data, status) {
             var d;
-			d = data.Data;
-			getPlayerDataFromQuery();
-			extendSessionData(d);
-			setUpPlayers(d);
-			if (myPlayer != -1) {
+            d = data.Data;
+            getPlayerDataFromQuery();
+            extendSessionData(d);
+            setUpPlayers(d);
+            setUpTestingLinks();
+            if (myPlayer != -1) {
                 addMyHand().done(function() { continueAfterSetUp(d); });
-			} else {
+            } else {
                 continueAfterSetUp(d);
             }
         });
     });
+}
+
+function setUpTestingLinks() {
+    console.log('TODO: remove testing links');
+    $('.player-name').each(function(i,el) {
+        el = $(el);
+        el.wrap('<a href="?name=' + el.text() + '"/>');
+    })
 }
 
 function continueAfterSetUp(d) {
@@ -241,14 +250,65 @@ function setUpMyMoves(game) {
             a.find('.done')
             .removeAttr('disabled')
             .click(function(ev) {
-                var gs;
+                var gs, hand;
+                hand = [];
+                $('.hand .card').each(function (idx, el) {
+                    el = $(el);
+                    hand.push(el.data('card'));
+                });
+                a.find('.pass,.done').attr('disabled','disabled');
+
                 gs = $('<div class="group-setup">'+
                         '<div class="groups-wrap"><div class="groups"/></div>'+
                         '<input class="add-group" type="button" value="+">'+
-                        '<input class="send-group" type="button" value="Send">'+
+                        '<input class="cancel-groups" type="button" value="Cancel">'+
+                        '<input class="send-groups" type="button" value="Send">'+
                         '</div>');
                 gs.find('.add-group').click(function(ev) {
                     addGroup();
+                    ev.preventDefault();
+                });
+                gs.find('.cancel-groups').click(function(ev) {
+                    var i,h;
+                    $('.hand li').remove();
+                    h = $('.hand');
+                    for (i in hand) {
+                        addCardItem(h, hand[i]);
+                    }
+                    $('.group-setup').remove();
+                    a.find('.pass,.done').removeAttr('disabled');
+                    ev.preventDefault();
+                });
+                gs.find('.send-groups').click(function(ev) {
+                    var gStr, uStr;
+                    gStr = '';
+                    $('.groups .group').each(function(idx,el) {
+                        $(el).find('.card').each(function(idx,el) {
+                            gStr += cardToAscii($(el).data('card')) + ',';
+                        });
+                        gStr = gStr.substr(0, gStr.length - 1);
+                        gStr += ';';
+                    });
+                    gStr = gStr.substr(0, gStr.length - 1);
+
+                    console.log(gStr);
+
+                    uStr = '';
+                    $('.hand .card').each(function (idx, el) {
+                        uStr += cardToAscii($(el).data('card')) + ',';
+                    });
+                    uStr = uStr.substr(0, uStr.length - 1);
+
+                    $.ajax({
+                        'url': '/3-13/test/' + myName + '/?move=' + CV('DECLARE_DONE') + '&groups=' + gStr,
+                        'dataType': 'json',
+                    }).done(function (data, status) {
+                        if (data.Status !== 0) {
+                            alert(data.Info);
+                            return; // TODO reload?
+                        }
+                        cmdQ.push(synchronizeTableStatus);
+                    });
                     ev.preventDefault();
                 });
                 $('#my-player').prepend(gs);
@@ -411,9 +471,13 @@ function addMyPlayer(hand) {
 		return;
 	}
 	for (i=0; i<hand.length;++i) {
-		f.append('<li class="dense">'+ cardToHtml(hand[i]) +'</li>');
-        f.find('li').last().find('.card').data('card', hand[i]);
-	}
+	    addCardItem(f, hand[i]);
+    }
+}
+
+function addCardItem(to, card) {
+    to.append('<li class="dense">'+ cardToHtml(card) +'</li>');
+    to.find('li').last().find('.card').data('card', card);
 }
 
 function addMyHand() {
@@ -452,8 +516,7 @@ function updateMyHand() {
 		});
 
 		for (i in hand) {
-			f.append('<li class="dense">'+ cardToHtml(hand[i]) +'</li>');
-			f.find('li').last().find('.card').data('card', hand[i]);
+            addCardItem(f, hand[i]);
 		}
 	});
 }

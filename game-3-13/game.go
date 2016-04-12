@@ -127,6 +127,12 @@ func NewPassCommand(p int) MoveCommand {
 	}
 }
 
+func NewDoneCommand(p int, fg FinalGroups) MoveCommand {
+	return MoveCommand{
+		p, DECLARE_DONE, playingcards.NIL_CARD, fg,
+	}
+}
+
 type Scores []int
 
 type GameSession struct {
