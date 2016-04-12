@@ -281,7 +281,7 @@ func (s *State) advancePlayer() {
 		s.CurrentState = PLAYING
 	}
 	if s.CurrentState == FINISHING &&
-		s.CurrentPlayer == s.StartingPlayer {
+		s.CurrentPlayer == s.StartingPlayer { // BUG this condition is just wrong, it should be who finished first... ouch
 		s.CurrentState = FINISHED // BUG when StartingPlayer finishes
 	}
 }

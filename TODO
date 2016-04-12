@@ -1,4 +1,7 @@
 
+Project:
+* curl test with init simple first round; make it expose the StartingPlayer declare done
+
 Ideas to implement
 
 * HTTP server
