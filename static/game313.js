@@ -178,7 +178,6 @@ function setUpMyMoves(game) {
                 w = $('<li class="dense"/>');
                 w.append(d);
                 w.appendTo('#my-player .hand');
-                console.log('about to notify server about the move');
                 confirm = $('#my-player .hand li').last();
                 $.ajax({
                     url: '/3-13/test/' + myName + '/?move=' + CV(m),
@@ -186,6 +185,7 @@ function setUpMyMoves(game) {
                 }).done(function(data, status) {
                     if (data.Status !== 0) {
                         alert(data.Info);
+                        cmdQ.push(synchronizeTableStatus);
                         return; // TODO reload?
                     }
                     confirm.html(cardToHtml(data.Data));
@@ -300,13 +300,15 @@ function setUpMyMoves(game) {
                     uStr = uStr.substr(0, uStr.length - 1);
 
                     $.ajax({
-                        'url': '/3-13/test/' + myName + '/?move=' + CV('DECLARE_DONE') + '&groups=' + gStr,
+                        'url': '/3-13/test/' + myName + '/?move=' + CV('DECLARE_DONE') +
+                            '&groups=' + gStr + '&unassigned=' + uStr,
                         'dataType': 'json',
                     }).done(function (data, status) {
                         if (data.Status !== 0) {
                             alert(data.Info);
                             return; // TODO reload?
                         }
+                        $('.group-setup').remove();
                         cmdQ.push(synchronizeTableStatus);
                     });
                     ev.preventDefault();
