@@ -24,14 +24,15 @@ const (
 )
 
 type State struct {
-	Players        []Player
-	StartingPlayer int
-	CurrentPlayer  int
-	CurrentState   int
-	Deck           playingcards.Deck
-	Pile           playingcards.Pile
-	FinalGroups    []FinalGroups
-	Trumph         playingcards.Rank
+	Players         []Player
+	StartingPlayer  int
+	CurrentPlayer   int
+	FinishingPlayer int
+	CurrentState    int
+	Deck            playingcards.Deck
+	Pile            playingcards.Pile
+	FinalGroups     []FinalGroups
+	Trumph          playingcards.Rank
 }
 
 type Player struct {
@@ -73,7 +74,7 @@ func New(playersNo int) *State {
 func newWithStaringPlayer(playersNo int, startingPlayer int) *State {
 	ret := &State{
 		make([]Player, playersNo),
-		startingPlayer, startingPlayer,
+		startingPlayer, startingPlayer, -1,
 		NOT_DEALT,
 		playingcards.Create104Deck(),
 		make([]playingcards.Card, 0, 104),
@@ -232,7 +233,10 @@ func (s *State) DoneMove(player int, groups FinalGroups) error {
 
 	s.FinalGroups[player] = groups
 	s.Players[player].Hand = s.Players[player].Hand[:0]
-	s.CurrentState = FINISHING //BUG in advance player
+	if s.CurrentState != FINISHING {
+		s.FinishingPlayer = player
+		s.CurrentState = FINISHING
+	}
 	s.advancePlayer()
 
 	return nil
@@ -281,8 +285,8 @@ func (s *State) advancePlayer() {
 		s.CurrentState = PLAYING
 	}
 	if s.CurrentState == FINISHING &&
-		s.CurrentPlayer == s.StartingPlayer { // BUG this condition is just wrong, it should be who finished first... ouch
-		s.CurrentState = FINISHED // BUG when StartingPlayer finishes
+		s.CurrentPlayer == s.FinishingPlayer {
+		s.CurrentState = FINISHED
 	}
 }
 
