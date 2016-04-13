@@ -357,8 +357,9 @@ function rotateArr(a, i) {
 function extendSessionData(d) {
 	var i;
 	for (i=0; i<d.Players.length;++i) {
-		d.Game.Players[i].Index = i;
-		d.Game.Players[i].Name = d.Players[i];
+        d.Game.Players[i].Index = i;
+        d.Game.Players[i].Name = d.Players[i];
+        d.Game.Players[i].FinalGroup = d.Game.FinalGroups[i];
 	}
 }
 
@@ -413,13 +414,15 @@ function pId(i) {
 }
 
 function updatePlayers(game) {
-	var i;
+	var i, p;
 	$('.active-player').removeClass('active-player');
 	$(pId(game.CurrentPlayer)).addClass('active-player');
 
     for (i=0; i<game.Players.length; ++i) {
         if (myPlayer == i) continue;
-		updateCardsInHand(game.Players[i]);
+        p = game.Players[i];
+        updateCardsInHand(p);
+        checkAndSetFinalGroups(p);
 	}
 
 	updateMyHand();
@@ -438,6 +441,39 @@ function updateCardsInHand(player) {
 		p.find('ul').append('<li>'+cardBackHtml()+'</li>');
 		++l;
 	}
+}
+
+function checkAndSetFinalGroups(player) {
+    var fg,p,i,f,set,unassigned;
+    if (player.FinalGroup.Set === null) {
+        return;
+    }
+    fg = assureFinalGroupsDivExists(pId(player.Index));
+
+    p = $(pId(player.Index));
+    f = p.find('ul.fan');
+    f.html();
+    addAllCardsTo(f, player.FinalGroup.Unassigned);
+
+    fg.html();
+    set = player.FinalGroup.Set;
+    for (i in set) {
+        f = $('<ul class="fan"/>');
+        addAllCardsTo(f, set[i]);
+        fg.append(f);
+    }
+    console.log(player);
+}
+
+function assureFinalGroupsDivExists(id) {
+    var fg, fgSel;
+    fgSel = id + ' .final-groups';
+    fg = $(fgSel);
+    if (fg.length === 0) {
+        $(id).append('<div class="final-groups"/>');
+        fg = $(fgSel);
+    }
+    return fg;
 }
 
 function addMyPlayer(hand) {
@@ -480,6 +516,15 @@ function addMyPlayer(hand) {
 function addCardItem(to, card) {
     to.append('<li class="dense">'+ cardToHtml(card) +'</li>');
     to.find('li').last().find('.card').data('card', card);
+    return to;
+}
+
+function addAllCardsTo(to, arr) {
+    var i;
+    for (i in arr) {
+        addCardItem(to, arr[i]);
+    }
+    return to;
 }
 
 function addMyHand() {

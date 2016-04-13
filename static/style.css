@@ -197,3 +197,9 @@ div.active-player {
     top: -10px;
 }
 
+.final-groups {
+    border: 1px solid green;
+    margin-top: 15px;
+    padding: 5px;
+}
+
