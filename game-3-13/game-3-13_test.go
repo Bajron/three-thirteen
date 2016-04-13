@@ -241,6 +241,9 @@ func TestDoneMove(t *testing.T) {
 	// REINITIALIZATION
 	state = prepareStateWithHand(0, 3, validDoneHand)
 	state.CurrentState = PLAYING
+	state.StartingPlayer = 1
+	state.CurrentPlayer = 0
+
 	takeAndThrow(state, 0)
 
 	validDoneHandCheat := playingcards.Group{
@@ -260,6 +263,7 @@ func TestDoneMove(t *testing.T) {
 	}
 	if state.CurrentState != FINISHING {
 		t.Error("after first done, we should go to final round")
+		t.Errorf("state=%v", state.CurrentState)
 	}
 	if state.CurrentPlayer != 1 {
 		t.Error("current player should be 1")
@@ -269,6 +273,11 @@ func TestDoneMove(t *testing.T) {
 	takeAndThrow(state, 1)
 	err = state.DoneMove(1, makeAllUnassigned(state, 1))
 	assertNoError(t, err)
+	if state.CurrentState != FINISHING {
+		t.Error("after first done, we should go to final round")
+		t.Errorf("state=%s", state.CurrentState)
+	}
+
 	takeAndThrow(state, 2)
 	err = state.DoneMove(2, makeAllUnassigned(state, 2))
 	assertNoError(t, err)
