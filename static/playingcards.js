@@ -8,7 +8,15 @@ function cardHtml(c) {
 }
 
 function cardsEqual(a,b) {
-    if (a == b) return true;
+	if (typeof a === 'undefined') {
+		console.log('*!* lhs in cardsEqual is undefined');
+		return false;
+	}
+	if (typeof b === 'undefined') {
+		console.log('*!* rhs in cardsEqual is undefined');
+		return false;
+	}
+	if (a == b) return true;
     return a.Rank === b.Rank && a.Suit === b.Suit;
 }
 
@@ -21,6 +29,7 @@ function cardAsciiToUc(a) {
 }
 
 function cardToAscii(obj) {
+	if (typeof obj === 'undefined') return 'undefined';
 	if (obj.Rank < 0 || obj.Suit < 0) return '';
     return ''+ ct.Ranks[obj.Rank] + ct.Suits[obj.Suit];
 }
