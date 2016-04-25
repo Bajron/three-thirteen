@@ -38,12 +38,14 @@ function sequence() {
     local players=`echo "${session}" | ej Data.Players | sed -r 's/[,\[]|]/ /g'`
     eval "players=(${players})" # to remove quotes
 
+    echo "Dealing #${dealer} -- ${players[$dealer]}"
+    call "test/${players[$dealer]}/?marshal=0" | ej Info
+
+    # update session
+    local session=`call 'test/'`
     if [ `echo "${session}" | ej Data.Game.PileTop` != '{"Rank":10,"Suit":1}' ]; then
         echo "*** warning your deck is probably shuffled"
     fi
-
-    echo "Dealing #${dealer} -- ${players[$dealer]}"
-    call "test/${players[$dealer]}/?marshal=0" | ej Info 
 
     local c=${starting}
     local p=${players[$c]}
