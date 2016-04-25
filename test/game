@@ -1,0 +1,112 @@
+#!/bin/bash
+
+HERE=$(dirname $(readlink -f "${BASH_SOURCE[0]}"))
+
+go install github.com/Bajron/three-thirteen
+go install github.com/Bajron/ej
+
+RUN_PLACE="${HERE}/.."
+CURL=('curl' '-s' '-k')
+U='https://localhost:8080/3-13'
+
+function call() {
+    "${CURL[@]}" "${U}/${1}"
+}
+
+DO_WAIT=1
+# server is started as coproc
+COPROC_PID=
+function on_exit() {
+    [ ${COPROC_PID} ] &&
+        kill -0 ${COPROC_PID} && 
+        kill -s SIGTERM ${COPROC_PID}
+}
+
+cd "${RUN_PLACE}"
+coproc three-thirteen
+trap on_exit EXIT
+
+# simple sequence
+# * token checks must be disabled
+# * deck is not shuffled (i.e first clubs from A to K, then diamonds etc.)
+function sequence() {
+    # create
+    local session=`call '?create=test&players=a,b,c'`
+    
+    local dealer=`echo "${session}" | ej Data.Game.DealingPlayer`
+    local starting=`echo "${session}" | ej Data.Game.StartingPlayer`
+    local players=`echo "${session}" | ej Data.Players | sed -r 's/[,\[]|]/ /g'`
+    eval "players=(${players})" # to remove quotes
+
+    if [ `echo "${session}" | ej Data.Game.PileTop` != '{"Rank":10,"Suit":1}' ]; then
+        echo "*** warning your deck is probably shuffled"
+    fi
+
+    echo "Dealing #${dealer} -- ${players[$dealer]}"
+    call "test/${players[$dealer]}/?marshal=0" | ej Info 
+
+    local c=${starting}
+    local p=${players[$c]}
+    local n=${#players[@]}
+
+    echo "Player #$c -- $p"
+    # take from deck, and it's JC
+    call "test/${p}/?move=1" | ej Info
+    # throw it back and pass
+    call "test/${p}/?move=2&card=JC" | ej Info 
+    call "test/${p}/?move=3" | ej Info
+
+    local next_player='c=$(( (c+1)%n )) ; p=${players[$c]} ; echo "Player #$c -- $p"'
+
+    eval "${next_player}"
+    # take QC, throw 8C
+    call "test/${p}/?move=1" | ej Info
+    call "test/${p}/?move=2&card=8C" | ej Info 
+    call "test/${p}/?move=3" | ej Info
+    
+    eval "${next_player}"
+
+    # take 8C, throw 6C; got set, but it is still first round
+    call "test/${p}/?move=0" | ej Info
+    call "test/${p}/?move=2&card=6C" | ej Info 
+    call "test/${p}/?move=3" | ej Info
+    
+    eval "${next_player}"
+    
+    call "test/${p}/?move=1" | ej Info
+    call "test/${p}/?move=2&card=KC" | ej Info 
+    call "test/${p}/?move=3" | ej Info
+
+    eval "${next_player}"
+
+    call "test/${p}/?move=0" | ej Info
+    call "test/${p}/?move=2&card=5C" | ej Info 
+    call "test/${p}/?move=3" | ej Info
+    
+    eval "${next_player}"
+
+    # done
+    call "test/${p}/?move=1" | ej Info
+    call "test/${p}/?move=2&card=AD" | ej Info 
+    call "test/${p}/?move=4&groups=3C,8C,9C&unassigned=" | ej Info
+    
+    eval "${next_player}"
+    
+    call "test/${p}/?move=0" | ej Info
+    call "test/${p}/?move=2&card=7C" | ej Info 
+    call "test/${p}/?move=4&groups=&unassigned=AC,4C,AD" | ej Info
+    
+    eval "${next_player}"
+
+    call "test/${p}/?move=1" | ej Info
+    call "test/${p}/?move=2&card=KC" | ej Info 
+    call "test/${p}/?move=4&groups=&unassigned=2C,QC,2D" | ej Info
+}
+
+sequence
+
+if [ "${DO_WAIT}" == "1" ]; then
+    echo "Waiting for server close..."
+    wait ${COPROC_PID}
+fi
+
