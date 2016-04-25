@@ -38,6 +38,7 @@ func init() {
 
 type PublicStateView struct {
 	Players        []PublicPlayerView
+	Admin          int
 	StartingPlayer int
 	DealingPlayer  int
 	CurrentPlayer  int
@@ -68,9 +69,10 @@ func (s State) GetPublicPlayersView() []PublicPlayerView {
 	return ret
 }
 
-func GetPublicStateView(s *State) *PublicStateView {
+func GetPublicStateView(s *State, admin int) *PublicStateView {
 	return &PublicStateView{
 		s.GetPublicPlayersView(),
+		admin,
 		s.StartingPlayer,
 		s.DealingPlayer(),
 		s.CurrentPlayer,
@@ -215,7 +217,7 @@ func (gs *GameSession) Marshal(cmd GameCommand) error {
 }
 
 func (gs *GameSession) GetTableState() *PublicStateView {
-	return GetPublicStateView(gs.state)
+	return GetPublicStateView(gs.state, gs.admin)
 }
 
 func (gs *GameSession) GetPlayersHand(i int) playingcards.Group {

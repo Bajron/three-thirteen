@@ -52,7 +52,13 @@ function continueAfterSetUp(d) {
         } else {
             setPrompt('Wait for the dealer');
         }
-	} else if (myPlayer === game.CurrentPlayer) {
+	} else if (game.CurrentState === CV('FINISHED')) {
+        if (myPlayer === game.Admin) {
+            setUpAdmin(game);
+        } else {
+            setPrompt('Wair for the game owner');
+        }
+    } else if (myPlayer === game.CurrentPlayer) {
         setUpMyMoves(game);
     } else {
         setPrompt('Wait for your turn');
@@ -65,7 +71,7 @@ function setUpDealer() {
 
     setPrompt('You are the dealer');
 
-    a = $('#my-player .actions');
+    a = $('#my-player .special-actions');
     a.show();
     a.find('.done,.pass').attr('disabled', 'disabled');
     a.find('.deal')
@@ -79,10 +85,37 @@ function setUpDealer() {
                 alert(data.Info);
                 return; // TODO reload?
             }
+            a.find('.deal').attr('disabled','disabled');
             cmdQ.push(synchronizeTableStatus);
         });
         ev.preventDefault();
     });
+}
+
+function setUpAdmin(game) {
+    var a;
+    a = $('#my-player .special-actions');
+    a.show();
+    if (game.Trumph < 14) {
+        setPrompt('Start next round when ready');
+        a.find('.nextTrumph')
+        .removeAttr('disabled')
+        .click(function(ev) {
+            $.ajax({
+                'url' : '/3-13/test/' + myName + '/?marshal=' + CV('NEXT_TRUMPH'),
+                'dataType': 'json',
+            }).done(function(data, status) {
+                if (data.Status !== 0) {
+                    alert(data.Info);
+                    return; // TODO reload?
+                }
+                a.find('.nextTrumph').attr('disabled','disabled');
+                cmdQ.push(synchronizeTableStatus);
+            });
+        });
+    } else {
+        setPrompt('Start next game when ready');
+    }
 }
 
 function consumeCommands() {
@@ -482,16 +515,21 @@ function addMyPlayer(hand) {
     $('#my-player').append(
             playerHtml(myName),
             '<div class="actions"></div>',
+            '<div class="special-actions"></div>',
             '<div class="prompt"></div>'
     );
 	h = $('#my-player .player-box');
 	h.attr('id', 'player-' + myPlayer);
 
     a = $('#my-player .actions');
-    a.hide();
-    a.append('<input class="deal" type="button" value="Deal"/>');
     a.append('<input class="done" type="button" value="Groups"/>');
     a.append('<input class="pass" type="button" value="Pass"/>');
+    a.find('input').attr('disabled','disabled');
+
+    a = $('#my-player .special-actions');
+    a.append('<input class="deal" type="button" value="Deal"/>');
+    a.append('<input class="nextTrumph" type="button" value="Next Trumph"/>');
+    a.append('<input class="nextGame" type="button" value="Next Game"/>');
     a.find('input').attr('disabled','disabled');
 
 	f = h.find('ul.fan');

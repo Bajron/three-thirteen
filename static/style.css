@@ -132,6 +132,10 @@ div.active-player {
     background-color: white;
 }
 
+.actions input, .special-actions input {
+	margin: 2px 3px;
+}
+
 #my-player .prompt {
     vertical-align: middle;
     padding: 5px;
