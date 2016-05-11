@@ -59,10 +59,11 @@ type CodesTranslations struct {
 }
 
 type SessionState struct {
-	Game       *game313.PublicStateView
-	Players    []string
-	MovesStart int
-	Moves      []game313.MoveCommand
+	Game        *game313.PublicStateView
+	Players     []string
+	MovesTotal  int
+	MovesOffset int
+	Moves       []game313.MoveCommand
 }
 
 type SessionScores struct {
@@ -104,19 +105,21 @@ func NewOkMessage(d interface{}, inReply string, token string) *Message {
 }
 
 func (s *ServerSession) GetState() *SessionState {
-	return &SessionState{
-		s.Session.GetTableState(),
-		s.Players,
-		-1,
-		nil,
-	}
+	return s.GetStateWithMoves(-1)
 }
 
 func (s *ServerSession) GetStateWithMoves(since int) *SessionState {
 	moves := s.Session.GetMovesHistory()
-	r := s.GetState()
-	if 0 < since && since < len(moves) {
-		r.MovesStart = since
+	r := &SessionState{
+		s.Session.GetTableState(),
+		s.Players,
+		len(moves),
+		len(moves),
+		moves[len(moves):],
+	}
+
+	if 0 <= since && since < len(moves) {
+		r.MovesOffset = since
 		r.Moves = moves[since:]
 	}
 	return r
@@ -332,7 +335,8 @@ func main() {
 					sendError(err)
 					return
 				}
-				jsonOrError(w, NewOkMessage(nil, "move", ""))
+				nextMove := len(s.Session.GetMovesHistory())
+				jsonOrError(w, NewOkMessage(nextMove, "move", ""))
 			case game313.DECLARE_DONE:
 				fg := game313.NewFinalGroups()
 				if values, ok = q["groups"]; ok && len(values) > 0 && len(values[0]) > 0 {
@@ -357,7 +361,8 @@ func main() {
 					sendError(err)
 					return
 				}
-				jsonOrError(w, NewOkMessage(nil, "move", ""))
+				nextMove := len(s.Session.GetMovesHistory())
+				jsonOrError(w, NewOkMessage(nextMove, "move", ""))
 			}
 
 		} else {
