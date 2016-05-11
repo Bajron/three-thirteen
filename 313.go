@@ -59,8 +59,15 @@ type CodesTranslations struct {
 }
 
 type SessionState struct {
-	Game    *game313.PublicStateView
-	Players []string
+	Game       *game313.PublicStateView
+	Players    []string
+	MovesStart int
+	Moves      []game313.MoveCommand
+}
+
+type SessionScores struct {
+	Trumphs []game313.Scores
+	Games   []game313.Scores
 }
 
 type Message struct {
@@ -100,6 +107,25 @@ func (s *ServerSession) GetState() *SessionState {
 	return &SessionState{
 		s.Session.GetTableState(),
 		s.Players,
+		-1,
+		nil,
+	}
+}
+
+func (s *ServerSession) GetStateWithMoves(since int) *SessionState {
+	moves := s.Session.GetMovesHistory()
+	r := s.GetState()
+	if 0 < since && since < len(moves) {
+		r.MovesStart = since
+		r.Moves = moves[since:]
+	}
+	return r
+}
+
+func (s *ServerSession) GetScores() *SessionScores {
+	return &SessionScores{
+		s.Session.GetScoresHistory(),
+		s.Session.GetGamesHistory(),
 	}
 }
 
@@ -211,8 +237,23 @@ func main() {
 			fmt.Fprintf(w, "Game session does not exit\n")
 			return
 		}
-		pdata := s.GetState()
-		jsonOrError(w, NewOkMessage(pdata, "session info", ""))
+		q := r.URL.Query()
+		if _, ok := q["scores"]; ok {
+			pdata := s.GetScores()
+			jsonOrError(w, NewOkMessage(pdata, "session scores", ""))
+		} else if v, ok := q["since"]; ok && len(v) > 0 && len(v[0]) > 0 {
+			since, err := strconv.Atoi(v[0])
+			if err != nil {
+				msg := fmt.Sprintf("Error: %v", err)
+				jsonOrError(w, NewErrorMessage(msg, "move", ""))
+				return
+			}
+			pdata := s.GetStateWithMoves(since)
+			jsonOrError(w, NewOkMessage(pdata, "session info with moves", ""))
+		} else {
+			pdata := s.GetState()
+			jsonOrError(w, NewOkMessage(pdata, "session info", ""))
+		}
 	})
 
 	ttRouter.HandleFunc("/{session}/{player}/", func(w http.ResponseWriter, r *http.Request) {
@@ -240,7 +281,8 @@ func main() {
 		} else if values, ok := q["marshal"]; ok && len(values) > 0 && len(values[0]) > 0 {
 			m, err := strconv.Atoi(values[0])
 			if err != nil {
-				fmt.Fprintf(w, "Error: %v", err)
+				msg := fmt.Sprintf("Error: %v", err)
+				jsonOrError(w, NewErrorMessage(msg, "move", ""))
 				return
 			}
 

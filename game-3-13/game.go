@@ -195,6 +195,14 @@ func (s *State) DealingPlayer() int {
 	return s.PreviousPlayer(s.StartingPlayer)
 }
 
+func (s *State) Scores() Scores {
+	ret := make(Scores, len(s.Players))
+	for i, p := range s.Players {
+		ret[i] = p.Points
+	}
+	return ret
+}
+
 func (gs *GameSession) Marshal(cmd GameCommand) error {
 	switch cmd.Move {
 	case DEAL:
@@ -207,7 +215,12 @@ func (gs *GameSession) Marshal(cmd GameCommand) error {
 		if gs.admin != cmd.Player {
 			return &gameError{"Only game admin can do this"}
 		}
-		return gs.state.AdvanceRound()
+		err := gs.state.AdvanceRound()
+		if err == nil {
+			gs.scoresHistory = append(gs.scoresHistory, gs.state.Scores())
+			gs.history = gs.history[:0]
+		}
+		return err
 	case NEXT_GAME:
 		if gs.admin != cmd.Player {
 			return &gameError{"Only game admin can do this"}
@@ -222,4 +235,16 @@ func (gs *GameSession) GetTableState() *PublicStateView {
 
 func (gs *GameSession) GetPlayersHand(i int) playingcards.Group {
 	return gs.state.Players[i].Hand
+}
+
+func (gs *GameSession) GetScoresHistory() []Scores {
+	return gs.scoresHistory
+}
+
+func (gs *GameSession) GetGamesHistory() []Scores {
+	return gs.gamesHistory
+}
+
+func (gs *GameSession) GetMovesHistory() []MoveCommand {
+	return gs.history
 }

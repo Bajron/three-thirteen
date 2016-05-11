@@ -181,6 +181,8 @@ function setPrompt(txt) {
     $('#my-player .prompt').text(txt);
 }
 
+// TODO: moves by click
+
 function setUpMyMoves(game) {
     var p = game.Players[myPlayer];
     if (p.State === CV('TAKE')) {
